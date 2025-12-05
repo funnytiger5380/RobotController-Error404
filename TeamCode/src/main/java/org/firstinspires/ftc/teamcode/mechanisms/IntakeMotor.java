@@ -1,6 +1,9 @@
 package org.firstinspires.ftc.teamcode.mechanisms;
 
+import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.FORWARD;
+import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE;
 import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
+import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.FLOAT;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -9,106 +12,190 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class IntakeMotor {
     private DcMotor intakeMotor;
+    private String motorName = "intakeMotor";
+
+    DcMotorSimple.Direction motorDirection = FORWARD;
+    DcMotor.ZeroPowerBehavior motorZeroPowerBehavior = BRAKE;
 
     private enum IntakeDirection { FORWARD, REVERSE }
-    private IntakeDirection intakeDirection;
+    private IntakeDirection intakeDirection = IntakeDirection.FORWARD;
 
-    private enum IntakeState { ON, OFF, PANIC }
-    private IntakeState intakeState;
+    private enum IntakeState { OFF, ON, PANIC }
+    private IntakeState intakeState = IntakeState.OFF;
 
-    private final double MAX_SPEED = 1.0;
-    private final double STOP_SPEED = 0.0;
-    private double normalPower = 0.7;
-    private double currentPower;
+    private double maxPower = 1.0;
+    private double motorPower = 0.75;
 
-    private ElapsedTime timer = new ElapsedTime();
+    private final ElapsedTime timer = new ElapsedTime();
     private double panicTime = 0.10;
 
-    public void init(HardwareMap hwMap, String deviceName) {
-        intakeMotor = hwMap.get(DcMotor.class, deviceName);
-        intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+    private boolean isBusy = false;
+    private boolean isPanic = false;
+
+    public void build(HardwareMap hardwareMap) {
+        intakeMotor = hardwareMap.get(DcMotor.class, motorName);
+        intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        intakeMotor.setDirection(motorDirection);
+        intakeMotor.setZeroPowerBehavior(motorZeroPowerBehavior);
+        intakeMotor.setPower(0.0);
+    }
+
+    public IntakeMotor motorName(String motorName) {
+        this.motorName = motorName;
+        return this;
+    }
+
+    public IntakeMotor motorDirection(DcMotorSimple.Direction motorDirection) {
+        this.motorDirection = motorDirection;
+        return this;
+    }
+
+    public IntakeMotor motorUseBrakeMode(boolean useBrakeMode) {
+        if (useBrakeMode)
+            motorZeroPowerBehavior = BRAKE;
+        else
+            motorZeroPowerBehavior = FLOAT;
+        return this;
+    }
+
+    public IntakeMotor maxPower(double maxPower) {
+        this.maxPower = maxPower;
+        return this;
+    }
+
+    public IntakeMotor motorPower(double motorPower) {
+        this.motorPower = motorPower;
+        return this;
+    }
+
+    public String getMotorDirection() {
+        return intakeDirection.toString();
+    }
+
+    public void setMotorDirectionForward() {
+        motorDirection = FORWARD;
+        intakeMotor.setDirection(motorDirection);
+    }
+
+    public void setMotorDirectionReverse() {
+        motorDirection = REVERSE;
+        intakeMotor.setDirection(motorDirection);
+    }
+
+    public void setMotorBrakeMode() {
         intakeMotor.setZeroPowerBehavior(BRAKE);
-        intakeMotor.setPower(STOP_SPEED);
-
-        intakeDirection = IntakeDirection.FORWARD;
-        intakeState = IntakeState.OFF;
     }
 
-    public void setForwardMotor() {
-        intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+    public void setMotorFloatMode() {
+        intakeMotor.setZeroPowerBehavior(FLOAT);
     }
 
-    public void setReverseMotor() {
-        intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-    }
-
-    public void setPower(double pwrNum) {
-        normalPower = pwrNum;
+    public void setPower(double setPower) {
+        motorPower = Math.min(setPower, maxPower);
     }
 
     public double getPower() {
-        return currentPower;
-    }
-
-    public String getDirection() {
-        return intakeDirection == IntakeDirection.FORWARD ? "FORWARD" : "REVERSE";
+        return intakeMotor.getPower();
     }
 
     public String getState() {
-        if (intakeState == IntakeState.PANIC)
-            return "PANIC";
-        else if (intakeState == IntakeState.ON)
-            return "ON";
-        else
-            return "OFF";
+        return intakeState.toString();
+    }
+
+    public boolean isBusy() {
+        return isBusy;
+    }
+
+    public boolean isPanic() {
+        return isPanic;
+    }
+
+    public void setPanicTime(double panicTime) {
+        this.panicTime = panicTime;
+    }
+
+    public void setIntakeOff() {
+        run(false, true, false);
+    }
+
+    public void setIntakeOn() {
+        run(true, false, false);
+    }
+
+    public void setIntakeOn(double setPower) {
+        setPower(setPower);
+        setIntakeOn();
+    }
+
+    public void setIntakePanic() {
+        run(false, false, true);
+    }
+
+    public void setIntakePanic(double panicTime) {
+        setPanicTime(panicTime);
+        setIntakePanic();
+        while (isPanic())
+            setIntakeOn();
+        setPanicTime(this.panicTime);
+    }
+
+    public void setIntakePanic(double panicTime, double setPower) {
+        setPanicTime(panicTime);
+        setPower(setPower);
+        setIntakePanic();
     }
 
     public void run(boolean intakeOn, boolean intakeOff, boolean panic) {
+        double tmpPower;
+
         if (intakeOff) {
+            isBusy = false;
+            isPanic = false;
             intakeState = IntakeState.OFF;
-            intakeMotor.setPower(STOP_SPEED);
+            intakeMotor.setPower(0.0);
         } else {
             switch (intakeState) {
                 case OFF:
                     if (intakeOn) {
+                        isBusy = true;
                         intakeState = IntakeState.ON;
                         intakeDirection = IntakeDirection.FORWARD;
-                        intakeMotor.setPower(normalPower);
+                        intakeMotor.setPower(motorPower);
                     } else if (panic) {
+                        isBusy = true;
+                        isPanic = true;
                         timer.reset();
                         intakeState = IntakeState.PANIC;
                         intakeDirection = IntakeDirection.REVERSE;
-                        intakeMotor.setPower(-1 * normalPower);
+                        intakeMotor.setPower(-1 * motorPower);
                     }
                     break;
                 case ON:
                     if (panic) {
+                        isPanic = true;
                         timer.reset();
                         intakeState = IntakeState.PANIC;
                         intakeDirection = IntakeDirection.REVERSE;
-                        intakeMotor.setPower(-1 * normalPower);
+                        intakeMotor.setPower(-1 * motorPower);
                     } else if (intakeOn) {
-                        currentPower = Math.abs(intakeMotor.getPower()) + 0.05;
-                        if (currentPower <= MAX_SPEED)
-                            intakeMotor.setPower(currentPower);
+                        tmpPower = Math.abs(intakeMotor.getPower()) + 0.05;
+                        if (tmpPower <= maxPower)
+                            intakeMotor.setPower(tmpPower);
                     } else {
-                        currentPower = normalPower;
-                        intakeMotor.setPower(currentPower);
+                        intakeMotor.setPower(motorPower);
                     }
                     break;
                 case PANIC:
                     if (panic)
                         timer.reset();
                     else if (timer.seconds() >= panicTime) {
+                        isPanic = false;
                         intakeState = IntakeState.ON;
                         intakeDirection = IntakeDirection.FORWARD;
-                        intakeMotor.setPower(normalPower);
+                        intakeMotor.setPower(motorPower);
                     }
                     break;
             }
         }
-    }
-    public void setPanicTime(double second) {
-        panicTime = second;
     }
 }
