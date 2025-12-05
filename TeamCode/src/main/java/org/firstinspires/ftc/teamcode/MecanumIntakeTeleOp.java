@@ -78,7 +78,7 @@ public class MecanumIntakeTeleOp extends OpMode {
             .rightFeederDirection(REVERSE);
 
     // === Run timer & Misc. ===
-    private ElapsedTime runtime = new ElapsedTime();
+    private final ElapsedTime runtime = new ElapsedTime();
     private enum Alliance { BLUE, RED, NONE }
     private Alliance alliance = Alliance.NONE;
     private boolean isIMURequested = false;
