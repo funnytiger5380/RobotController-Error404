@@ -1,6 +1,10 @@
 package org.firstinspires.ftc.teamcode;
 
+import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.FORWARD;
+import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE;
+
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -30,10 +34,11 @@ import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
  *  D-pad Left   = intake reverse
  */
 
-@TeleOp
-public class RobotTeleOp extends OpMode {
+@Disabled
+@TeleOp (name = "MecanumIntakeTeleOp", group = "Error404")
+public class MecanumIntakeTeleOp extends OpMode {
     private final double DRIVE_MAX_SPEED = 0.9;
-    private final double INAKE_POWER = 0.75;
+    private final double INTAKE_POWER = 0.75;
     private final double INTAKE_PANIC_TIME = 0.1;
 
     private final double ClOSE_LAUNCH_TARGET_VELOCITY = 1300;
@@ -44,45 +49,61 @@ public class RobotTeleOp extends OpMode {
     private final double FEEDER_RUN_SECONDS = 0.10;
     private final double LAUNCH_COOLOFF_SECONDS = 0.20;
 
-    private final double GAMEPAD_TRIGGER_PRESS_THRESHOLD = 0.5;
-
     // === Drivetrain motors ===
-    MecanumDrive mecanumDrive = new MecanumDrive();
+    private final MecanumDrive mecanumDrive = new MecanumDrive()
+            .leftFrontName("left_drive_front")
+            .leftBackName("left_drive_back")
+            .rightFrontName("right_drive_front")
+            .rightBackName("right_drive_back")
+            .leftFrontDirection(REVERSE)
+            .leftBackDirection(REVERSE)
+            .rightFrontDirection(FORWARD)
+            .rightBackDirection(FORWARD)
+            .useBrakeMode(true);
 
     // === Intake ===
-    IntakeMotor intakeMotor = new IntakeMotor();
+    private final IntakeMotor intakeMotor = new IntakeMotor()
+            .motorName("intake")
+            .motorUseBrakeMode(true)
+            .motorDirection(REVERSE);
 
     // === Launcher and feeders ===
-    Launcher launcher = new Launcher();
+    private final Launcher launcher = new Launcher()
+            .launcherName("launcher")
+            .launcherUseBrakeMode(true)
+            .launcherDirection(REVERSE)
+            .leftFeederName("left_feeder")
+            .rightFeederName("right_feeder")
+            .leftFeederDirection(FORWARD)
+            .rightFeederDirection(REVERSE);
 
     // === Run timer & Misc. ===
-    private ElapsedTime runtime= new ElapsedTime();
+    private ElapsedTime runtime = new ElapsedTime();
     private enum Alliance { BLUE, RED, NONE }
     private Alliance alliance = Alliance.NONE;
     private boolean isIMURequested = false;
+    private boolean isIMUResetNeeded = false;
 
     @Override
     public void init() {
         /* === Drivetrain setup === */
-        mecanumDrive.initDriveMotor(hardwareMap, "left_drive_front","left_drive_back",
-                "right_drive_front", "right_drive_back");
+        mecanumDrive.build(hardwareMap);
         mecanumDrive.setMaxSpeed(DRIVE_MAX_SPEED);
 
         /* === IMU setup === */
-        mecanumDrive.initRevIMU(hardwareMap, "imu",
+        mecanumDrive.initRevIMU(hardwareMap,
                 RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
                 RevHubOrientationOnRobot.UsbFacingDirection.UP);
-        mecanumDrive.resetDriveYaw();
 
         /* === Intake setup === */
-        intakeMotor.init(hardwareMap, "intake");
-        intakeMotor.setPower(INAKE_POWER);
+        intakeMotor.build(hardwareMap);
+        intakeMotor.setPower(INTAKE_POWER);
         intakeMotor.setPanicTime(INTAKE_PANIC_TIME);
 
         /* === Launcher setup === */
-        launcher.init(hardwareMap, "launcher", "left_feeder", "right_feeder");
-        launcher.setLaucherCloseVelocity(ClOSE_LAUNCH_TARGET_VELOCITY, CLOSE_LAUNCH_MIN_VELOCITY);
-        launcher.setLaucherFarVelocity(FAR_LAUNCH_TARGET_VELOCITY, FAR_LAUNCH_MIN_VELOCITY);
+        launcher.build(hardwareMap);
+        launcher.setLauncherCloseVelocity(ClOSE_LAUNCH_TARGET_VELOCITY, CLOSE_LAUNCH_MIN_VELOCITY);
+        launcher.setLauncherFarVelocity(FAR_LAUNCH_TARGET_VELOCITY, FAR_LAUNCH_MIN_VELOCITY);
         launcher.setLauncherCoolOffSec(LAUNCH_COOLOFF_SECONDS);
         launcher.setFeederRunSec(FEEDER_RUN_SECONDS);
     }
@@ -99,9 +120,15 @@ public class RobotTeleOp extends OpMode {
         else if (gamepad1.crossWasPressed())
             isIMURequested = false;
 
-        if (!isIMURequested)
+        if (gamepad1.triangleWasPressed())
+            isIMURequested = true;
+        else if (gamepad1.crossWasPressed())
+            isIMURequested = false;
+
+        if (!isIMURequested) {
+            isIMUResetNeeded = true;
             mecanumDrive.setDriveAngularOffset(0.0);
-        else {
+        } else {
             if (alliance == Alliance.BLUE)
                 mecanumDrive.setDriveAngularOffset(-90.0);
             else if (alliance == Alliance.RED)
@@ -112,15 +139,19 @@ public class RobotTeleOp extends OpMode {
 
         telemetry.addData("Status", "Initialized\n");
         telemetry.addData("Alliance", "Press Square/Circle button to select Blue/Red team\n");
-        telemetry.addData("Use RevIMU", "Press Triangle/Cross to choose Field/Robot Orientation\n");
-        telemetry.addData("Alliance", alliance == Alliance.BLUE ? "BLUE" : alliance == Alliance.RED ? "RED" : "NONE");
+        telemetry.addData("Use RevIMU", "Press Triangle/Cross button to choose Field/Robot Orientation\n");
         telemetry.addData("IMURequested", isIMURequested ? "YES" : "NO");
+        telemetry.addData("Alliance", alliance.toString());
         telemetry.addData("Robot Heading", mecanumDrive.getDriveHeading(AngleUnit.DEGREES));
         telemetry.update();
     }
 
     @Override
     public void start() {
+        if (isIMUResetNeeded) {
+            mecanumDrive.resetDriveYaw();
+        }
+        mecanumDrive.restartDrives();
         runtime.reset();
     }
 
@@ -132,33 +163,33 @@ public class RobotTeleOp extends OpMode {
         double rotate  = gamepad1.right_stick_x;
 
         if (!isIMURequested)
-            mecanumDrive.drive(forward, strafe, rotate);
+            mecanumDrive.runDrive(forward, strafe, rotate);
         else
-            mecanumDrive.driveFieldRelative(forward, strafe, rotate);
+            mecanumDrive.runDriveFieldRelative(forward, strafe, rotate);
 
         // === Intake Motor ===
         boolean intakeOn  = gamepad1.left_bumper;
-        boolean intakeOff = (gamepad1.left_trigger > GAMEPAD_TRIGGER_PRESS_THRESHOLD);
+        boolean intakeOff = (gamepad1.left_trigger > 0.5);
         boolean panic     = gamepad1.dpad_left;
 
         intakeMotor.run(intakeOn, intakeOff, panic);
 
         // === Launcher ===
         boolean closeShotRequested = gamepad1.right_bumper;
-        boolean farShotRequested   = (gamepad1.right_trigger > GAMEPAD_TRIGGER_PRESS_THRESHOLD);
+        boolean farShotRequested   = (gamepad1.right_trigger > 0.5);
 
         launcher.launch(closeShotRequested, farShotRequested);
 
         // === Status Output ===
-        telemetry.addData("Alliance", alliance == Alliance.BLUE ? "BLUE" : alliance == Alliance.RED ? "RED" : "NONE");
+        telemetry.addData("Alliance", alliance.toString());
         telemetry.addData("IMURequested", isIMURequested ? "YES\n" : "NO\n");
         telemetry.addData("Status", "Run Time: " + runtime.toString());
         telemetry.addData("Front Motor Power", "left (%.2f), right (%.2f)", mecanumDrive.getLeftPowerFront(), mecanumDrive.getRightPowerFront());
         telemetry.addData("Back Motor Power", "left (%.2f), right (%.2f)", mecanumDrive.getLeftPowerBack(), mecanumDrive.getRightPowerBack());
         telemetry.addData("Launcher State", launcher.getState());
-        telemetry.addData("Launcher Speed", launcher.getLaucherVelocity());
+        telemetry.addData("Launcher Speed", launcher.getLauncherVelocity());
         telemetry.addData("Intake State", intakeMotor.getState());
-        telemetry.addData("Intake Direction", intakeMotor.getDirection());
+        telemetry.addData("Intake Direction", intakeMotor.getMotorDirection());
         telemetry.addData("Intake Power", intakeMotor.getPower());
         telemetry.addData("Robot Heading", mecanumDrive.getDriveHeading(AngleUnit.DEGREES));
         telemetry.update();
