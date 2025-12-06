@@ -5,7 +5,6 @@ import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -14,9 +13,8 @@ import org.firstinspires.ftc.teamcode.mechanisms.IntakeMotor;
 import org.firstinspires.ftc.teamcode.mechanisms.Launcher;
 import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
 
-@Disabled
-@Autonomous (name = "blueAutoFarSide", group = "Error404")
-public class blueAutoFarSide extends LinearOpMode {
+@Autonomous (name = "farSideAuto", group = "Error404")
+public class farSideAuto extends LinearOpMode {
     // === Drivetrain motors ===
     private final MecanumDrive mecanumDrive = new MecanumDrive()
             .leftFrontName("left_drive_front")
@@ -50,7 +48,7 @@ public class blueAutoFarSide extends LinearOpMode {
 
     private final double ClOSE_LAUNCH_TARGET_VELOCITY = 1300;
     private final double CLOSE_LAUNCH_MIN_VELOCITY    = 1275;
-    private final double FAR_LAUNCH_TARGET_VELOCITY   = 1625;
+    private final double FAR_LAUNCH_TARGET_VELOCITY   = 1610;
     private final double FAR_LAUNCH_MIN_VELOCITY      = 1600;
 
     private final double FEEDER_RUN_SECONDS = 0.10;
@@ -62,8 +60,12 @@ public class blueAutoFarSide extends LinearOpMode {
     private ElapsedTime panicTimer = new ElapsedTime();
 
     // Autonomous step machine
-    private enum StepState { START, MOVE_FORWARD, TURN_LEFT, LAUNCHING, FINISHED }
+    private enum StepState { IDLE, MOVE_FORWARD, TARGET, LAUNCHING, FINISHED}
     private StepState stepState;
+
+    // Alliance assignment
+    private enum Alliance { BLUE, RED, NONE }
+    private Alliance alliance = Alliance.NONE;
 
     private int shotCount = 0;
 
@@ -89,18 +91,27 @@ public class blueAutoFarSide extends LinearOpMode {
         launcher.setLauncherCoolOffSec(LAUNCH_COOLOFF_SECONDS);
         launcher.setFeederRunSec(FEEDER_RUN_SECONDS);
 
-        telemetry.addData("Status", "Initialized");
-        telemetry.update();
+        while (opModeInInit()) {
+            if (gamepad1.xWasPressed())
+                alliance = Alliance.BLUE;
+            else if (gamepad1.circleWasPressed())
+                alliance = Alliance.RED;
+
+            telemetry.addData("Status", "Initialized\n");
+            telemetry.addData("Alliance", "Press Square/Circle button to select Blue/Red team\n");
+            telemetry.addData("Alliance", alliance.toString());
+            telemetry.update();
+        }
 
         waitForStart();
 
-        setStepState(StepState.START);
+        setStepState(StepState.IDLE);
         mecanumDrive.restartDrives();
         runtime.reset();
 
         while (opModeIsActive()) {
             switch (stepState) {
-                case START:
+                case IDLE:
                     intakeMotor.setIntakeOn();
                     setStepState(StepState.MOVE_FORWARD);
                     break;
@@ -110,14 +121,17 @@ public class blueAutoFarSide extends LinearOpMode {
                         mecanumDrive.runDrive(0.3, 0, 0); // forward at 30% power
                     else {
                         mecanumDrive.stopDrives();
-                        setStepState(StepState.TURN_LEFT);
+                        setStepState(StepState.TARGET);
                     }
                     break;
 
-                case TURN_LEFT:
-                    if (stepTimer.seconds() < 0.2) // turn left 0.2s
-                        mecanumDrive.runDrive(0, 0, -0.3); // left at 30% power
-                    else {
+                case TARGET:
+                    if (stepTimer.seconds() < 0.45) { // turn to target 0.45s
+                        if (alliance == Alliance.BLUE)
+                            mecanumDrive.runDrive(0, 0, -0.3); // left at 30% power
+                        else if (alliance == Alliance.RED)
+                            mecanumDrive.runDrive(0, 0, 0.3); // right at 30% power
+                    } else {
                         mecanumDrive.stopDrives();
                         setStepState(StepState.LAUNCHING);
                     }
@@ -125,8 +139,11 @@ public class blueAutoFarSide extends LinearOpMode {
 
                 case LAUNCHING:
                     if (shotCount < 3) {
-                        customLaunchFarShot();  // intake panic + far shot; 0.5 second between launches
-                        shotCount++;
+                        if (stepTimer.seconds() > 1.0) { // 1.0 second between launches
+                            customLaunchFarShot();  // intake panic + far shot
+                            shotCount++;
+                            stepTimer.reset();
+                        }
                     }
                     else {
                         intakeMotor.setIntakeOff();
@@ -135,8 +152,8 @@ public class blueAutoFarSide extends LinearOpMode {
                     break;
 
                 case FINISHED:
-                    if (stepTimer.seconds() < 0.5) // move forward 0.5s
-                        mecanumDrive.runDrive(0.3, 0, 0.3); // forward at 30% power
+                    if (stepTimer.seconds() < 0.8) // move forward 0.8s
+                        mecanumDrive.runDrive(0.3, 0, 0); // forward at 30% power
                     else
                         mecanumDrive.resetDrives();
                     break;
@@ -185,4 +202,3 @@ public class blueAutoFarSide extends LinearOpMode {
             customLaunchCloseShot();
     }
 }
-
