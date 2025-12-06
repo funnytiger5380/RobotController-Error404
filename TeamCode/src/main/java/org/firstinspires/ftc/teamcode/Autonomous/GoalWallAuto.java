@@ -5,7 +5,6 @@ import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -14,8 +13,8 @@ import org.firstinspires.ftc.teamcode.mechanisms.IntakeMotor;
 import org.firstinspires.ftc.teamcode.mechanisms.Launcher;
 import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
 
-@Autonomous (name = "blueAutoGoalWall", group = "Error404")
-public class blueAutoGoalWall extends LinearOpMode {
+@Autonomous (name = "GoalWallAuto", group = "Error404")
+public class GoalWallAuto extends LinearOpMode {
     // === Drivetrain motors ===
     private final MecanumDrive mecanumDrive = new MecanumDrive()
             .leftFrontName("left_drive_front")
@@ -49,20 +48,24 @@ public class blueAutoGoalWall extends LinearOpMode {
 
     private final double ClOSE_LAUNCH_TARGET_VELOCITY = 1300;
     private final double CLOSE_LAUNCH_MIN_VELOCITY    = 1275;
-    private final double FAR_LAUNCH_TARGET_VELOCITY   = 1625;
+    private final double FAR_LAUNCH_TARGET_VELOCITY   = 1610;
     private final double FAR_LAUNCH_MIN_VELOCITY      = 1600;
 
     private final double FEEDER_RUN_SECONDS = 0.10;
     private final double LAUNCH_COOLOFF_SECONDS = 0.50;
 
     // Timers
-    private ElapsedTime runtime = new ElapsedTime();
-    private ElapsedTime stepTimer = new ElapsedTime();
-    private ElapsedTime panicTimer = new ElapsedTime();
+    private final ElapsedTime runtime = new ElapsedTime();
+    private final ElapsedTime stepTimer = new ElapsedTime();
+    private final ElapsedTime panicTimer = new ElapsedTime();
 
     // Autonomous step machine
-    private enum StepState { START, MOVE_BACKWARD, LAUNCHING, FINISHED }
+    private enum StepState { IDLE, MOVE_BACK, LAUNCHING, FINISHED }
     private StepState stepState;
+
+    // Alliance assignment
+    private enum Alliance { BLUE, RED, NONE }
+    private Alliance alliance = Alliance.NONE;
 
     private int shotCount = 0;
 
@@ -88,36 +91,48 @@ public class blueAutoGoalWall extends LinearOpMode {
         launcher.setLauncherCoolOffSec(LAUNCH_COOLOFF_SECONDS);
         launcher.setFeederRunSec(FEEDER_RUN_SECONDS);
 
-        telemetry.addData("Status", "Initialized");
-        telemetry.update();
+        while (opModeInInit()) {
+            if (gamepad1.xWasPressed())
+                alliance = Alliance.BLUE;
+            else if (gamepad1.circleWasPressed())
+                alliance = Alliance.RED;
+
+            telemetry.addData("Status", "Initialized\n");
+            telemetry.addData("Alliance", "Press Square/Circle button to select Blue/Red team\n");
+            telemetry.addData("Alliance", alliance.toString());
+            telemetry.update();
+        }
 
         waitForStart();
 
-        setStepState(StepState.START);
+        setStepState(StepState.IDLE);
         mecanumDrive.restartDrives();
         runtime.reset();
 
         while (opModeIsActive()) {
             switch (stepState) {
-                case START:
-                    intakeMotor.setIntakeOn();
-                    setStepState(StepState.MOVE_BACKWARD);
+                case IDLE:
+                    //intakeMotor.setIntakeOn();
+                    setStepState(StepState.MOVE_BACK);
                     break;
 
-                case MOVE_BACKWARD:
-                    if (stepTimer.seconds() < 3) // move backward 3s
-                        mecanumDrive.runDrive(-0.3, 0, 0); // forward at 30% power
+                case MOVE_BACK:
+                    if (stepTimer.seconds() < 3.7) // move back 3.7s
+                        mecanumDrive.runDrive(-0.3, 0, 0); // at 30% power
                     else {
                         mecanumDrive.stopDrives();
+                        intakeMotor.setIntakeOn();
                         setStepState(StepState.LAUNCHING);
                     }
                     break;
 
-
                 case LAUNCHING:
                     if (shotCount < 3) {
-                        customLaunchCloseShot();  // intake panic + close shot; 0.5 second between launches
-                        shotCount++;
+                        if (stepTimer.seconds() > 0.8) { // 0.8s second between launches
+                            customLaunchCloseShot();  // intake panic + close shot
+                            shotCount++;
+                            setStepState(StepState.LAUNCHING);
+                        }
                     }
                     else {
                         intakeMotor.setIntakeOff();
@@ -126,9 +141,12 @@ public class blueAutoGoalWall extends LinearOpMode {
                     break;
 
                 case FINISHED:
-                    if (stepTimer.seconds() < 0.5) // move back 0.5s
-                        mecanumDrive.runDrive(-0.3, 0, -0.3); // forward at 30% power
-                    else
+                    if (stepTimer.seconds() < 1.0) { // move to the side 1s
+                        if (alliance == Alliance.BLUE)
+                            mecanumDrive.runDrive(0, -0.5, 0); // at 50% power
+                        else if (alliance == Alliance.RED)
+                            mecanumDrive.runDrive(0, 0.5, 0); // at 50% power
+                    } else
                         mecanumDrive.resetDrives();
                     break;
             }
@@ -176,4 +194,3 @@ public class blueAutoGoalWall extends LinearOpMode {
             customLaunchCloseShot();
     }
 }
-
