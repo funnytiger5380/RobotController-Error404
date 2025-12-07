@@ -43,24 +43,24 @@ public class bluePedroPathing extends LinearOpMode {
     private final double FAR_LAUNCH_TARGET_VELOCITY   = 1600;
     private final double FAR_LAUNCH_MIN_VELOCITY      = 1575;
     private final double FEEDER_RUN_SECONDS = 0.10;
-    private final double LAUNCH_COOLOFF_SECONDS = 0.25;
+    private final double LAUNCH_COOLOFF_SECONDS = 0.20;
+    private final double LAUNCH_INTERVAL_SECONDS = 0.20;
 
-    //private VoltageSensor voltageSensor;
-    private Follower follower = Constants.createFollower(hardwareMap);
+    private Follower follower;
     private TelemetryManager panelsTelemetry;
     private Pose currentPose;
 
     private enum PathState {
-        PRELOAD_START_POS,
-        DRIVE_TO_SCORE_POS,
+        START_POS,
+        SCORE_POS,
         SHOOT_ARTIFACT,
-        DRIVE_TO_HIGH_SPIKE_POS,
+        HIGH_SPIKE_POS,
         GRAB_HIGH_SPIKE,
-        DRIVE_TO_MID_SPIKE_POS,
+        MID_SPIKE_POS,
         GRAB_MID_SPIKE,
-        DRIVE_TO_LOW_SPIKE_POS,
+        LOW_SPIKE_POS,
         GRAB_LOW_SPIKE,
-        DRIVE_TO_STOP_POS
+        STOP_POS
     }
     PathState pathState;
 
@@ -99,7 +99,7 @@ public class bluePedroPathing extends LinearOpMode {
 
     // Initialize elapsed timer in milliseconds
     private final Timer runTime = new Timer();
-    private final Timer pathTime = new Timer();
+    private final Timer pathTimer = new Timer();
     private final Timer panicTimer = new Timer();
 
     // Initialize spike count
@@ -213,8 +213,6 @@ public class bluePedroPathing extends LinearOpMode {
         // Initialize Panels telemetry
         panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
 
-        //voltageSensor = hardwareMap.voltageSensor.iterator().next();
-
         // Initialize intake motor
         intakeMotor.build(hardwareMap);
         intakeMotor.setPower(INTAKE_POWER);
@@ -243,9 +241,9 @@ public class bluePedroPathing extends LinearOpMode {
         telemetry.update(); // Update driver station after logging
 
         waitForStart();
-        setPathState(PathState.PRELOAD_START_POS);
+        setPathState(PathState.START_POS);
 
-        setSpkLimit(3);
+        setSpkLimit(spkLimit);
         runTime.resetTimer();
 
         while (opModeIsActive()) {
@@ -264,8 +262,7 @@ public class bluePedroPathing extends LinearOpMode {
         log("Y-Position", currentPose.getY());
         log("Heading", currentPose.getHeading());
         log("PathState", pathState.toString());
-        log("PathTime", pathTime.getElapsedTimeSeconds());
-        //log("Voltage", voltageSensor.getVoltage());
+        log("PathTimer", pathTimer.getElapsedTimeSeconds());
         telemetry.update(); // Update the driver station after logging
     }
 
@@ -283,87 +280,96 @@ public class bluePedroPathing extends LinearOpMode {
     }
 
     public boolean isSpkLimitHit() {
-        return spkCount > spkLimit;
+        return ++spkCount > spkLimit;
     }
 
     public void setPathState(PathState newPathState) {
         this.pathState = newPathState;
-        pathTime.resetTimer();
+        pathTimer.resetTimer();
     }
 
     public void updatePathState() {
         switch (pathState) {
-            case PRELOAD_START_POS:
-                intakeMotor.setIntakeOn();
+            case START_POS:
                 follower.followPath(startPos2ScorePos);
-                setPathState(PathState.DRIVE_TO_SCORE_POS);
+                setPathState(PathState.SCORE_POS);
                 break;
-            case DRIVE_TO_SCORE_POS:
+
+            case SCORE_POS:
                 if (!follower.isBusy()) { // wait till follower path update is done
-                    customLaunchShot(3, "CLOSE"); // launcher will become busy when shooting
+                    intakeMotor.setIntakeOn();
                     setPathState(PathState.SHOOT_ARTIFACT);
                 }
                 break;
-            case SHOOT_ARTIFACT:
-                if (!launcher.isBusy() && !intakeMotor.isPanic()) { // wait till launcher is done shooting
-                    spkCount++;
 
-                    if (isSpkLimitHit()) {
-                        follower.followPath(scorePos2StopPos);
-                        setPathState(PathState.DRIVE_TO_STOP_POS);
-                    }
-                    else if (spkCount == 1) {
-                        follower.followPath(scorePos2HighSpkPos);
-                        setPathState(PathState.DRIVE_TO_HIGH_SPIKE_POS);
-                    } else if (spkCount == 2) {
-                        follower.followPath(scorePos2MidSpkPos);
-                        setPathState(PathState.DRIVE_TO_MID_SPIKE_POS);
-                    } else if (spkCount == 3) {
-                        follower.followPath(scorePos2LowSpkPos);
-                        setPathState(PathState.DRIVE_TO_LOW_SPIKE_POS);
-                    } else {
-                        follower.followPath(scorePos2StopPos);
-                        setPathState(PathState.DRIVE_TO_STOP_POS);
-                    }
+            case SHOOT_ARTIFACT:
+                customLaunchCloseShot(3, LAUNCH_INTERVAL_SECONDS);  // intake panic + close shot
+                intakeMotor.setIntakeOff();
+
+                if (isSpkLimitHit()) {
+                    follower.followPath(scorePos2StopPos);
+                    setPathState(PathState.STOP_POS);
+                } else if (spkCount == 1) {
+                    follower.followPath(scorePos2HighSpkPos);
+                    setPathState(PathState.HIGH_SPIKE_POS);
+                } else if (spkCount == 2) {
+                    follower.followPath(scorePos2MidSpkPos);
+                    setPathState(PathState.MID_SPIKE_POS);
+                } else if (spkCount == 3) {
+                    follower.followPath(scorePos2LowSpkPos);
+                    setPathState(PathState.LOW_SPIKE_POS);
+                } else {
+                    follower.followPath(scorePos2HighSpkPos);
+                    setPathState(PathState.STOP_POS);
                 }
                 break;
-            case DRIVE_TO_HIGH_SPIKE_POS:
+
+            case HIGH_SPIKE_POS:
                 if (!follower.isBusy()) {
+                    intakeMotor.setIntakeOn();
                     follower.followPath(highSpkPos2GrabEnd, DRIVE_GRAB_SPEED, true);
                     setPathState(PathState.GRAB_HIGH_SPIKE);
                 }
                 break;
+
             case GRAB_HIGH_SPIKE:
                 if (!follower.isBusy()) {
                     follower.followPath(highSpkGrbEnd2ScorePos);
-                    setPathState(PathState.DRIVE_TO_SCORE_POS);
+                    setPathState(PathState.SCORE_POS);
                 }
                 break;
-            case DRIVE_TO_MID_SPIKE_POS:
+
+            case MID_SPIKE_POS:
                 if (!follower.isBusy()) {
+                    intakeMotor.setIntakeOn();
                     follower.followPath(midSpkPos2GrabEnd, DRIVE_GRAB_SPEED, true);
                     setPathState(PathState.GRAB_MID_SPIKE);
                 }
                 break;
+
             case GRAB_MID_SPIKE:
                 if (!follower.isBusy()) {
                     follower.followPath(midSpkGrbEnd2ScorePos);
-                    setPathState(PathState.DRIVE_TO_SCORE_POS);
+                    setPathState(PathState.SCORE_POS);
                 }
                 break;
-            case DRIVE_TO_LOW_SPIKE_POS:
+
+            case LOW_SPIKE_POS:
                 if (!follower.isBusy()) {
+                    intakeMotor.setIntakeOn();
                     follower.followPath(lowSpkPos2GrabEnd, DRIVE_GRAB_SPEED, true);
                     setPathState(PathState.GRAB_LOW_SPIKE);
                 }
                 break;
+
             case GRAB_LOW_SPIKE:
                 if (!follower.isBusy()) {
                     follower.followPath(lowSpkGrbEnd2ScorePos);
-                    setPathState(PathState.DRIVE_TO_SCORE_POS);
+                    setPathState(PathState.SCORE_POS);
                 }
                 break;
-            case DRIVE_TO_STOP_POS:
+
+            case STOP_POS:
                 if (!follower.isBusy()) {
                     intakeMotor.setIntakeOff();
                     follower.holdPoint(stopPose);
@@ -372,23 +378,29 @@ public class bluePedroPathing extends LinearOpMode {
         }
     }
 
-    private void customLaunchShot (int count) {
-        customLaunchShot (count, "CLOSE");
+    private void customLaunchCloseShot() {
+        panicTimer.resetTimer();
+        intakeMotor.setIntakePanic(INTAKE_PANIC_TIME);
+        launcher.launchCloseShot();
     }
 
-    private void customLaunchShot (int shotCount, String shotSelect) {
-        for (int i = 0; i < shotCount; i++) {
-            intakeMotor.setIntakePanic();
-            panicTimer.resetTimer();
-            if (panicTimer.getElapsedTimeSeconds() > INTAKE_PANIC_TIME) {
-                intakeMotor.setIntakeOn();
-                if (shotSelect.equalsIgnoreCase("Far"))
-                    launcher.launchFarShot();
-                else if (shotSelect.equalsIgnoreCase("Close"))
-                    launcher.launchCloseShot();
-                else
-                    launcher.launchCloseShot();
-            }
+    private void customLaunchCloseShot(int count, double interval) {
+        for (int i = 0; i < count; i++) {
+            do {} while (pathTimer.getElapsedTimeSeconds() < interval);
+            customLaunchCloseShot();
+        }
+    }
+
+    private void customLaunchFarShot() {
+        panicTimer.resetTimer();
+        intakeMotor.setIntakePanic(INTAKE_PANIC_TIME);
+        launcher.launchFarShot();
+    }
+
+    private void customLaunchFarShot(int count, double interval) {
+        for (int i = 0; i < count; i++) {
+            do {} while (pathTimer.getElapsedTimeSeconds() < interval);
+            customLaunchFarShot();
         }
     }
 
