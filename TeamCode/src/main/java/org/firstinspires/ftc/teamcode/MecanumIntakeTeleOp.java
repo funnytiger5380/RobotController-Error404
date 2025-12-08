@@ -44,7 +44,7 @@ public class MecanumIntakeTeleOp extends OpMode {
     private final double ClOSE_LAUNCH_TARGET_VELOCITY = 1300;
     private final double CLOSE_LAUNCH_MIN_VELOCITY    = 1275;
     private final double FAR_LAUNCH_TARGET_VELOCITY   = 1600;
-    private final double FAR_LAUNCH_MIN_VELOCITY      = 1575;
+    private final double FAR_LAUNCH_MIN_VELOCITY      = 1580;
 
     private final double FEEDER_RUN_SECONDS = 0.10;
     private final double LAUNCH_COOLOFF_SECONDS = 0.20;
