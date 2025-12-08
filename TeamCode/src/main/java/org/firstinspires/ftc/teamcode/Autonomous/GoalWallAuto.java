@@ -5,6 +5,7 @@ import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -13,6 +14,7 @@ import org.firstinspires.ftc.teamcode.mechanisms.IntakeMotor;
 import org.firstinspires.ftc.teamcode.mechanisms.Launcher;
 import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
 
+@Disabled
 @Autonomous (name = "GoalWallAuto", group = "Error404")
 public class GoalWallAuto extends LinearOpMode {
     // === Drivetrain motors ===
@@ -112,16 +114,15 @@ public class GoalWallAuto extends LinearOpMode {
         while (opModeIsActive()) {
             switch (stepState) {
                 case IDLE:
-                    //intakeMotor.setIntakeOn();
+                    intakeMotor.setIntakeOn();
                     setStepState(StepState.MOVE_BACK);
                     break;
 
                 case MOVE_BACK:
-                    if (stepTimer.seconds() < 3.7) // move back 3.7s
+                    if (stepTimer.seconds() < 2.8) // move back 2.8s
                         mecanumDrive.runDrive(-0.3, 0, 0); // at 30% power
                     else {
                         mecanumDrive.stopDrives();
-                        intakeMotor.setIntakeOn();
                         setStepState(StepState.LAUNCHING);
                     }
                     break;
