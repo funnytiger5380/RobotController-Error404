@@ -5,6 +5,7 @@ import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -13,6 +14,7 @@ import org.firstinspires.ftc.teamcode.mechanisms.IntakeMotor;
 import org.firstinspires.ftc.teamcode.mechanisms.Launcher;
 import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
 
+@Disabled
 @Autonomous (name = "farSideAuto", group = "Error404")
 public class farSideAuto extends LinearOpMode {
     // === Drivetrain motors ===
@@ -55,9 +57,9 @@ public class farSideAuto extends LinearOpMode {
     private final double LAUNCH_COOLOFF_SECONDS = 0.50;
 
     // Timers
-    private ElapsedTime runtime = new ElapsedTime();
-    private ElapsedTime stepTimer = new ElapsedTime();
-    private ElapsedTime panicTimer = new ElapsedTime();
+    private final ElapsedTime runtime = new ElapsedTime();
+    private final ElapsedTime stepTimer = new ElapsedTime();
+    private final ElapsedTime panicTimer = new ElapsedTime();
 
     // Autonomous step machine
     private enum StepState { IDLE, MOVE_FORWARD, TARGET, LAUNCHING, FINISHED}
@@ -126,7 +128,7 @@ public class farSideAuto extends LinearOpMode {
                     break;
 
                 case TARGET:
-                    if (stepTimer.seconds() < 0.45) { // turn to target 0.45s
+                    if (stepTimer.seconds() < 0.35) { // turn to target 0.35s
                         if (alliance == Alliance.BLUE)
                             mecanumDrive.runDrive(0, 0, -0.3); // left at 30% power
                         else if (alliance == Alliance.RED)
