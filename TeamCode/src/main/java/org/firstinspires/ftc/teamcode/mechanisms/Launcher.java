@@ -113,6 +113,11 @@ public class Launcher {
         return isBusy;
     }
 
+    public void setLauncherOff() {
+        launch(false, false);
+        launcher.setVelocity(0.0);
+    }
+
     public void launchCloseShot() {
         while (!isBusy())
             launch(true, false);
