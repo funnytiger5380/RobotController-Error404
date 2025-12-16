@@ -38,6 +38,7 @@ import java.util.List;
 @TeleOp(name = "Tuning", group = "Pedro Pathing")
 public class Tuning extends SelectableOpMode {
     public static Follower follower;
+    public static Pose startPose = new Pose(72, 72, Math.toRadians(90));
 
     @IgnoreConfigurable
     static PoseHistory poseHistory;
@@ -130,7 +131,7 @@ public class Tuning extends SelectableOpMode {
 class LocalizationTest extends OpMode {
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72,72));
+        follower.setStartingPose(Tuning.startPose);
     }
 
     /** This initializes the PoseUpdater, the mecanum drive motors, and the Panels telemetry. */
@@ -186,7 +187,7 @@ class ForwardTuner extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72,72));
+        follower.setStartingPose(Tuning.startPose);
         follower.update();
         drawOnlyCurrent();
     }
@@ -234,7 +235,7 @@ class LateralTuner extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72,72));
+        follower.setStartingPose(Tuning.startPose);
         follower.update();
         drawOnlyCurrent();
     }
@@ -282,7 +283,7 @@ class TurnTuner extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72,72));
+        follower.setStartingPose(Tuning.startPose);
         follower.update();
         drawOnlyCurrent();
     }
@@ -337,7 +338,7 @@ class ForwardVelocityTuner extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(Tuning.startPose);
     }
 
     /** This initializes the drive motors as well as the cache of velocities and the Panels telemetry. */
@@ -444,7 +445,7 @@ class LateralVelocityTuner extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(Tuning.startPose);
     }
 
     /**
@@ -547,7 +548,7 @@ class ForwardZeroPowerAccelerationTuner extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(Tuning.startPose);
     }
 
     /** This initializes the drive motors as well as the Panels telemetryM. */
@@ -651,7 +652,7 @@ class LateralZeroPowerAccelerationTuner extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(Tuning.startPose);
     }
 
     /** This initializes the drive motors as well as the Panels telemetry. */
@@ -749,7 +750,7 @@ class TranslationalTuner extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(Tuning.startPose);
     }
 
     /** This initializes the Follower and creates the forward and backward Paths. */
@@ -818,7 +819,7 @@ class HeadingTuner extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(Tuning.startPose);
     }
 
     /**
@@ -890,7 +891,7 @@ class DriveTuner extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(Tuning.startPose);
     }
 
     /**
@@ -972,7 +973,7 @@ class Line extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(Tuning.startPose);
     }
 
     /** This initializes the Follower and creates the forward and backward Paths. */
@@ -1039,7 +1040,7 @@ class CentripetalTuner extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(Tuning.startPose);
     }
 
     /**
@@ -1101,9 +1102,15 @@ class CentripetalTuner extends OpMode {
  */
 class Triangle extends OpMode {
 
-    private final Pose startPose = new Pose(72, 72, Math.toRadians(0));
-    private final Pose interPose = new Pose(24 + 72, -24 + 72, Math.toRadians(90));
-    private final Pose endPose = new Pose(24 + 72, 24 + 72, Math.toRadians(45));
+    //private final Pose startPose = Tuning.startPose; // Pose(72, 72, Math.toRadians(0));
+    //private final Pose interPose = new Pose(24 + 72, -24 + 72, Math.toRadians(90));
+    //private final Pose endPose = new Pose(24 + 72, 24 + 72, Math.toRadians(45));
+
+    private final Pose startPose = Tuning.startPose;
+    private final Pose interPose = new Pose(24 + startPose.getX(), -24 + startPose.getY(),
+            Math.toRadians(90) + startPose.getHeading());
+    private final Pose endPose = new Pose(24 + startPose.getX(), 24 + startPose.getY(),
+            Math.toRadians(45) + startPose.getHeading());
 
     private PathChain triangle;
 
@@ -1123,7 +1130,7 @@ class Triangle extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(Tuning.startPose);
     }
 
     @Override
@@ -1194,7 +1201,7 @@ class Circle extends OpMode {
 
     @Override
     public void init() {
-        follower.setStartingPose(new Pose(72, 72));
+        follower.setStartingPose(Tuning.startPose);
     }
 
     /**
