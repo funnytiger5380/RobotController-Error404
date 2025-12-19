@@ -4,7 +4,6 @@ import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.FORWARD;
 import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -34,7 +33,6 @@ import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
  *  D-pad Left   = intake reverse
  */
 
-@Disabled
 @TeleOp (name = "MecanumIntakeTeleOp", group = "Error404")
 public class MecanumIntakeTeleOp extends OpMode {
     private final double DRIVE_MAX_SPEED = 0.9;
@@ -81,8 +79,9 @@ public class MecanumIntakeTeleOp extends OpMode {
     private final ElapsedTime runtime = new ElapsedTime();
     private enum Alliance { BLUE, RED, NONE }
     private Alliance alliance = Alliance.NONE;
+    private boolean isAlmostEndGame = false;
     private boolean isIMURequested = false;
-    private boolean isIMUResetNeeded = false;
+    private double driveHeadingOffset = 0.0;
 
     @Override
     public void init() {
@@ -120,21 +119,13 @@ public class MecanumIntakeTeleOp extends OpMode {
         else if (gamepad1.crossWasPressed())
             isIMURequested = false;
 
-        if (gamepad1.triangleWasPressed())
-            isIMURequested = true;
-        else if (gamepad1.crossWasPressed())
-            isIMURequested = false;
-
-        if (!isIMURequested) {
-            isIMUResetNeeded = true;
-            mecanumDrive.setDriveAngularOffset(0.0);
-        } else {
+        if (isIMURequested) {
             if (alliance == Alliance.BLUE)
-                mecanumDrive.setDriveAngularOffset(-90.0);
+                driveHeadingOffset = -90.0;
             else if (alliance == Alliance.RED)
-                mecanumDrive.setDriveAngularOffset(90.0);
-            else
-                mecanumDrive.setDriveAngularOffset(0.0);
+                driveHeadingOffset = 90.0;
+        } else {
+            driveHeadingOffset = 0.0;
         }
 
         telemetry.addData("Status", "Initialized\n");
@@ -142,15 +133,16 @@ public class MecanumIntakeTeleOp extends OpMode {
         telemetry.addData("Use RevIMU", "Press Triangle/Cross button to choose Field/Robot Orientation\n");
         telemetry.addData("IMURequested", isIMURequested ? "YES" : "NO");
         telemetry.addData("Alliance", alliance.toString());
-        telemetry.addData("Robot Heading", mecanumDrive.getDriveHeading(AngleUnit.DEGREES));
+        telemetry.addData("Robot Heading Offset", driveHeadingOffset);
         telemetry.update();
     }
 
     @Override
     public void start() {
-        if (isIMUResetNeeded) {
+        if (!isIMURequested)
             mecanumDrive.resetDriveYaw();
-        }
+
+        mecanumDrive.setDriveAngularOffset(driveHeadingOffset);
         mecanumDrive.restartDrives();
         runtime.reset();
     }
@@ -161,6 +153,13 @@ public class MecanumIntakeTeleOp extends OpMode {
         double forward = -gamepad1.left_stick_y;
         double strafe  = gamepad1.left_stick_x;
         double rotate  = gamepad1.right_stick_x;
+
+        if (runtime.seconds() > 120.0) {
+            terminateOpModeNow();
+        } else if (runtime.seconds() > 110.0 && !isAlmostEndGame) {
+            gamepad1.rumbleBlips(3);
+            isAlmostEndGame = true;
+        }
 
         if (!isIMURequested)
             mecanumDrive.runDrive(forward, strafe, rotate);
