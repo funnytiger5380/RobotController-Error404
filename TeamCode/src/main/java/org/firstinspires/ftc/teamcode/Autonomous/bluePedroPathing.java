@@ -460,6 +460,7 @@ public class bluePedroPathing extends LinearOpMode {
         // Initialize Pedro Pathing follower
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(startPose);
+        setPathState(PathState.START_POSE);
 
         // Initialize follower action list
         followerActionList = new LinkedList<>();
@@ -474,8 +475,6 @@ public class bluePedroPathing extends LinearOpMode {
 
         waitForStart();
         runTime.resetTimer();
-        nextFollowerAction();
-        setPathState(PathState.START_POSE);
 
         while (opModeIsActive()) {
             // Update Pedro Pathing and Panels every iteration
@@ -485,16 +484,16 @@ public class bluePedroPathing extends LinearOpMode {
 
             // Follower drive through the given pathing
             updatePathState();
-        }
 
-        // Log to Panels and driver station (custom log function)
-        log("RunTime", runTime.toString());
-        log("X-Position", currentPose.getX());
-        log("Y-Position", currentPose.getY());
-        log("Heading", currentPose.getHeading());
-        log("PathState", pathState.toString());
-        log("PathTimer", pathTimer.getElapsedTimeSeconds());
-        telemetry.update(); // Update the driver station after logging
+            // Log to Panels and driver station (custom log function)
+            log("RunTime", runTime.toString());
+            log("X-Position", currentPose.getX());
+            log("Y-Position", currentPose.getY());
+            log("Heading", currentPose.getHeading());
+            log("PathState", pathState.toString());
+            log("PathTimer", pathTimer.getElapsedTimeSeconds());
+            telemetry.update(); // Update the driver station after logging
+        }
     }
 
     public void setPathState(PathState newPathState) {
@@ -510,6 +509,8 @@ public class bluePedroPathing extends LinearOpMode {
         } else {
             switch (pathState) {
                 case START_POSE:
+                    nextFollowerAction();
+
                     if (followerAction == FollowerAction.GO_SHOOT) {
                         intakeMotor.setIntakeOn();
                         follower.followPath(buildPaths_startPos2Score());
