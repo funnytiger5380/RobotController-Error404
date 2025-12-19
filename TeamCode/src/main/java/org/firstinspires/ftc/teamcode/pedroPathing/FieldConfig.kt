@@ -7,11 +7,11 @@ import com.bylazar.field.FieldPresetParams
 class FieldConfig : FieldPluginConfig() {
     override var extraPresets: List<FieldPresetParams> = listOf(
         FieldPresetParams(
-            name = "Customized",
-            offsetX = -24.0 * 5,
-            offsetY = -24.0 * 5,
+            name = "Pedro DEG_180",
+            offsetX = -24.0 * 3,
+            offsetY = -24.0 * 3,
             flipX = false,
             flipY = true,
             reverseXY = false,
-            rotation = CanvasRotation.DEG_90))
+            rotation = CanvasRotation.DEG_180))
 }

@@ -86,21 +86,21 @@ public class bluePedroPathing extends LinearOpMode {
     private final double X_HIGH_SPIKE_LINE_START = 44.0;
     private final double Y_HIGH_SPIKE_LINE_START = 83.5;
     private final double H_HIGH_SPIKE_LINE_START = 180.0;
-    private final double X_HIGH_SPIKE_LINE_END = 22.0;
+    private final double X_HIGH_SPIKE_LINE_END = 17.0;
     private final double Y_HIGH_SPIKE_LINE_END = 83.5;
     private final double H_HIGH_SPIKE_LINE_END = 180.0;
 
     private final double X_MID_SPIKE_LINE_START = 44.0;
     private final double Y_MID_SPIKE_LINE_START = 59.5;
     private final double H_MID_SPIKE_LINE_START = 180.0;
-    private final double X_MID_SPIKE_LINE_END = 22.0;
+    private final double X_MID_SPIKE_LINE_END = 17.0;
     private final double Y_MID_SPIKE_LINE_END = 59.5;
     private final double H_MID_SPIKE_LINE_END = 180.0;
 
     private final double X_LOW_SPIKE_LINE_START = 44.0;
     private final double Y_LOW_SPIKE_LINE_START = 35.5;
     private final double H_LOW_SPIKE_LINE_START = 180.0;
-    private final double X_LOW_SPIKE_LINE_END = 22.0;
+    private final double X_LOW_SPIKE_LINE_END = 17.0;
     private final double Y_LOW_SPIKE_LINE_END = 35.5;
     private final double H_LOW_SPIKE_LINE_END = 180.0;
 
@@ -140,206 +140,300 @@ public class bluePedroPathing extends LinearOpMode {
     private final Pose gateReturn = new Pose(X_GATE_RETURN, Y_GATE_RETURN, Math.toRadians(H_GATE_RETURN));
 
     // Build various path chains
-    public PathChain buildPaths_startPos2Score() {
+    public PathChain buildPaths_startPos2Score() { return buildPaths_startPos2Score(false); }
+    public PathChain buildPaths_startPos2Score(boolean mirror) {
+        Pose startPose = mirror ? this.startPose.mirror() : this.startPose;
+        Pose scorePose = mirror ? this.scorePose.mirror() : this.scorePose;
         return follower.pathBuilder() // move from start position to scoring position
                 .addPath(new BezierLine(startPose, scorePose))
                 .setLinearHeadingInterpolation(startPose.getHeading(), scorePose.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_startPos2Stop() {
+    public PathChain buildPaths_startPos2Stop() { return buildPaths_startPos2Stop(false); }
+    public PathChain buildPaths_startPos2Stop(boolean mirror) {
+        Pose startPose = mirror ? this.startPose.mirror() : this.startPose;
+        Pose stopPose = mirror ? this.stopPose.mirror() : this.stopPose;
         return follower.pathBuilder() // move from start position to stop position
                 .addPath(new BezierLine(startPose, stopPose))
                 .setLinearHeadingInterpolation(startPose.getHeading(), stopPose.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_startPos2Gate() {
+    public PathChain buildPaths_startPos2Gate() { return buildPaths_startPos2Gate(false); }
+    public PathChain buildPaths_startPos2Gate(boolean mirror) {
+        Pose startPose = mirror ? this.startPose.mirror() : this.startPose;
+        Pose gatePose = mirror ? this.gatePose.mirror() : this.gatePose;
         return follower.pathBuilder() // move from start position to gate open standby position
                 .addPath(new BezierLine(startPose, gatePose))
                 .setLinearHeadingInterpolation(startPose.getHeading(), gatePose.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_startPos2HighSpkSet() {
+    public PathChain buildPaths_startPos2HighSpkSet() { return buildPaths_startPos2HighSpkSet(false); }
+    public PathChain buildPaths_startPos2HighSpkSet(boolean mirror) {
+        Pose startPose = mirror ? this.startPose.mirror() : this.startPose;
+        Pose highSpkPose = mirror ? this.highSpkPose.mirror() : this.highSpkPose;
         return follower.pathBuilder() // move from start position to high spike mark position
                 .addPath(new BezierLine(startPose, highSpkPose))
                 .setLinearHeadingInterpolation(startPose.getHeading(), highSpkPose.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_startPos2MidSpkSet() {
+    public PathChain buildPaths_startPos2MidSpkSet() { return buildPaths_startPos2MidSpkSet(false); }
+    public PathChain buildPaths_startPos2MidSpkSet(boolean mirror) {
+        Pose startPose = mirror ? this.startPose.mirror() : this.startPose;
+        Pose midSpkPose = mirror ? this.midSpkPose.mirror() : this.midSpkPose;
         return follower.pathBuilder() // move from start position to middle spike mark position
                 .addPath(new BezierLine(startPose, midSpkPose))
                 .setLinearHeadingInterpolation(startPose.getHeading(), midSpkPose.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_startPos2LowSpkSet() {
+    public PathChain buildPaths_startPos2LowSpkSet() { return buildPaths_startPos2LowSpkSet(false); }
+    public PathChain buildPaths_startPos2LowSpkSet(boolean mirror) {
+        Pose startPose = mirror ? this.startPose.mirror() : this.startPose;
+        Pose lowSpkPose = mirror ? this.lowSpkPose.mirror() : this.lowSpkPose;
         return follower.pathBuilder() // move from start position to low spike mark position
                 .addPath(new BezierLine(startPose, lowSpkPose))
                 .setLinearHeadingInterpolation(startPose.getHeading(), lowSpkPose.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_scorePos2Stop() {
+    public PathChain buildPaths_scorePos2Stop() { return buildPaths_scorePos2Stop(false); }
+    public PathChain buildPaths_scorePos2Stop(boolean mirror) {
+        Pose scorePose = mirror ? this.scorePose.mirror() : this.scorePose;
+        Pose stopPose = mirror ? this.stopPose.mirror() : this.stopPose;
         return follower.pathBuilder()// move from scoring position to stop position
                 .addPath(new BezierLine(scorePose, stopPose))
                 .setLinearHeadingInterpolation(scorePose.getHeading(), stopPose.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_scorePos2Gate() {
+    public PathChain buildPaths_scorePos2Gate() { return buildPaths_scorePos2Gate(false); }
+    public PathChain buildPaths_scorePos2Gate(boolean mirror) {
+        Pose scorePose = mirror ? this.scorePose.mirror() : this.scorePose;
+        Pose gatePose = mirror ? this.gatePose.mirror() : this.gatePose;
         return follower.pathBuilder()// move from scoring position to gate open standby position
                 .addPath(new BezierLine(scorePose, gatePose))
                 .setLinearHeadingInterpolation(scorePose.getHeading(), gatePose.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_scorePos2HighSpk() {
+    public PathChain buildPaths_scorePos2HighSpk() { return buildPaths_scorePos2HighSpk(false); }
+    public PathChain buildPaths_scorePos2HighSpk(boolean mirror) {
+        Pose scorePose = mirror ? this.scorePose.mirror() : this.scorePose;
+        Pose highSpkPose = mirror ? this.highSpkPose.mirror() : this.highSpkPose;
         return follower.pathBuilder() // move from scoring position to highest spike mark position
                 .addPath(new BezierLine(scorePose, highSpkPose))
                 .setLinearHeadingInterpolation(scorePose.getHeading(), highSpkPose.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_scorePos2MidSpk() {
+    public PathChain buildPaths_scorePos2MidSpk() { return buildPaths_scorePos2MidSpk(false); }
+    public PathChain buildPaths_scorePos2MidSpk(boolean mirror) {
+        Pose scorePose = mirror ? this.scorePose.mirror() : this.scorePose;
+        Pose midSpkPose = mirror ? this.midSpkPose.mirror() : this.midSpkPose;
         return follower.pathBuilder() // move from scoring position to middle spike mark position
                 .addPath(new BezierLine(scorePose, midSpkPose))
                 .setLinearHeadingInterpolation(scorePose.getHeading(), midSpkPose.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_scorePos2LowSpk() {
+    public PathChain buildPaths_scorePos2LowSpk() { return buildPaths_scorePos2LowSpk(false); }
+    public PathChain buildPaths_scorePos2LowSpk(boolean mirror) {
+        Pose scorePose = mirror ? this.scorePose.mirror() : this.scorePose;
+        Pose lowSpkPose = mirror ? this.lowSpkPose.mirror() : this.lowSpkPose;
         return follower.pathBuilder() // move from scoring position to lowest spike mark position
                 .addPath(new BezierLine(scorePose, lowSpkPose))
                 .setLinearHeadingInterpolation(scorePose.getHeading(), lowSpkPose.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_highSpkPos2GrabEnd() {
+    public PathChain buildPaths_highSpkPos2GrabEnd() { return buildPaths_highSpkPos2GrabEnd(false); }
+    public PathChain buildPaths_highSpkPos2GrabEnd(boolean mirror) {
+        Pose highSpkPose = mirror ? this.highSpkPose.mirror() : this.highSpkPose;
+        Pose highSpkEnd = mirror ? this.highSpkEnd.mirror() : this.highSpkEnd;
         return follower.pathBuilder() // grab the highest spike mark artifacts
                 .addPath(new BezierLine(highSpkPose, highSpkEnd))
                 .setLinearHeadingInterpolation(highSpkPose.getHeading(), highSpkEnd.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_midSpkPos2GrabEnd() {
+    public PathChain buildPaths_midSpkPos2GrabEnd() { return buildPaths_midSpkPos2GrabEnd(false); }
+    public PathChain buildPaths_midSpkPos2GrabEnd(boolean mirror) {
+        Pose midSpkPose = mirror ? this.midSpkPose.mirror() : this.midSpkPose;
+        Pose midSpkEnd = mirror ? this.midSpkEnd.mirror() : this.midSpkEnd;
         return follower.pathBuilder() // grab the middle spike mark artifacts
                 .addPath(new BezierLine(midSpkPose, midSpkEnd))
                 .setLinearHeadingInterpolation(midSpkPose.getHeading(), midSpkEnd.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_lowSpkPos2GrabEnd() {
+    public PathChain buildPaths_lowSpkPos2GrabEnd() { return buildPaths_lowSpkPos2GrabEnd(false); }
+    public PathChain buildPaths_lowSpkPos2GrabEnd(boolean mirror) {
+        Pose lowSpkPose = mirror ? this.lowSpkPose.mirror() : this.lowSpkPose;
+        Pose lowSpkEnd = mirror ? this.lowSpkEnd.mirror() : this.lowSpkEnd;
         return follower.pathBuilder() // grab the lowest spike mark artifacts
                 .addPath(new BezierLine(lowSpkPose, lowSpkEnd))
                 .setLinearHeadingInterpolation(lowSpkPose.getHeading(), lowSpkEnd.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_highSpkEnd2Score() {
+    public PathChain buildPaths_highSpkEnd2Score() { return buildPaths_highSpkEnd2Score(false); }
+    public PathChain buildPaths_highSpkEnd2Score(boolean mirror) {
+        Pose highSpkEnd = mirror ? this.highSpkEnd.mirror() : this.highSpkEnd;
+        Pose scorePose = mirror ? this.scorePose.mirror() : this.scorePose;
         return follower.pathBuilder() // move back to scoring position
                 .addPath(new BezierLine(highSpkEnd, scorePose))
                 .setLinearHeadingInterpolation(highSpkEnd.getHeading(), scorePose.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_midSpkEnd2Score() {
+    public PathChain buildPaths_midSpkEnd2Score() { return buildPaths_midSpkEnd2Score(false); }
+    public PathChain buildPaths_midSpkEnd2Score(boolean mirror) {
+        Pose midSpkEnd = mirror ? this.midSpkEnd.mirror() : this.midSpkEnd;
+        Pose scorePose = mirror ? this.scorePose.mirror() : this.scorePose;
         return follower.pathBuilder() // move back to scoring position
                 .addPath(new BezierLine(midSpkEnd, scorePose))
                 .setLinearHeadingInterpolation(midSpkEnd.getHeading(), scorePose.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_lowSpkEnd2Score() {
+    public PathChain buildPaths_lowSpkEnd2Score() { return buildPaths_lowSpkEnd2Score(false); }
+    public PathChain buildPaths_lowSpkEnd2Score(boolean mirror) {
+        Pose lowSpkEnd = mirror ? this.lowSpkEnd.mirror() : this.lowSpkEnd;
+        Pose scorePose = mirror ? this.scorePose.mirror() : this.scorePose;
         return follower.pathBuilder() // move back to scoring position
                 .addPath(new BezierLine(lowSpkEnd, scorePose))
                 .setLinearHeadingInterpolation(lowSpkEnd.getHeading(), scorePose.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_highSpkEnd2Gate() {
+    public PathChain buildPaths_highSpkEnd2Gate() { return buildPaths_highSpkEnd2Gate(false); }
+    public PathChain buildPaths_highSpkEnd2Gate(boolean mirror) {
+        Pose highSpkEnd = mirror ? this.highSpkEnd.mirror() : this.highSpkEnd;
+        Pose gatePose = mirror ? this.gatePose.mirror() : this.gatePose;
         return follower.pathBuilder() // move to gate open standby position
                 .addPath(new BezierLine(highSpkEnd, gatePose))
                 .setLinearHeadingInterpolation(highSpkEnd.getHeading(), gatePose.getHeading())
                 .build();
     }
-    public PathChain buildPaths_midSpkEnd2Gate() {
+
+    public PathChain buildPaths_midSpkEnd2Gate() { return buildPaths_midSpkEnd2Gate(false); }
+    public PathChain buildPaths_midSpkEnd2Gate(boolean mirror) {
+        Pose midSpkEnd = mirror ? this.midSpkEnd.mirror() : this.midSpkEnd;
+        Pose gatePose = mirror ? this.gatePose.mirror() : this.gatePose;
         return follower.pathBuilder() // move to gate open standby position
                 .addPath(new BezierLine(midSpkEnd, gatePose))
                 .setLinearHeadingInterpolation(midSpkEnd.getHeading(), gatePose.getHeading())
                 .build();
     }
-    public PathChain buildPaths_lowSpkEnd2Gate() {
+
+    public PathChain buildPaths_lowSpkEnd2Gate() { return buildPaths_lowSpkEnd2Gate(false); }
+    public PathChain buildPaths_lowSpkEnd2Gate(boolean mirror) {
+        Pose lowSpkEnd = mirror ? this.lowSpkEnd.mirror() : this.lowSpkEnd;
+        Pose gatePose = mirror ? this.gatePose.mirror() : this.gatePose;
         return follower.pathBuilder() // move to gate open standby position
                 .addPath(new BezierLine(lowSpkEnd, gatePose))
                 .setLinearHeadingInterpolation(lowSpkEnd.getHeading(), gatePose.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_highSpkEnd2Stop() {
+    public PathChain buildPaths_highSpkEnd2Stop() { return buildPaths_highSpkEnd2Stop(false); }
+    public PathChain buildPaths_highSpkEnd2Stop(boolean mirror) {
+        Pose highSpkEnd = mirror ? this.highSpkEnd.mirror() : this.highSpkEnd;
+        Pose stopPose = mirror ? this.stopPose.mirror() : this.stopPose;
         return follower.pathBuilder() // move to stop position
                 .addPath(new BezierLine(highSpkEnd, stopPose))
                 .setLinearHeadingInterpolation(highSpkEnd.getHeading(), stopPose.getHeading())
                 .build();
     }
-    public PathChain buildPaths_midSpkEnd2Stop() {
+
+    public PathChain buildPaths_midSpkEnd2Stop() { return buildPaths_midSpkEnd2Stop(false); }
+    public PathChain buildPaths_midSpkEnd2Stop(boolean mirror) {
+        Pose midSpkEnd = mirror ? this.midSpkEnd.mirror() : this.midSpkEnd;
+        Pose stopPose = mirror ? this.stopPose.mirror() : this.stopPose;
         return follower.pathBuilder() // move to stop position
                 .addPath(new BezierLine(midSpkEnd, stopPose))
                 .setLinearHeadingInterpolation(midSpkEnd.getHeading(), stopPose.getHeading())
                 .build();
     }
-    public PathChain buildPaths_lowSpkEnd2Stop() {
+
+    public PathChain buildPaths_lowSpkEnd2Stop() { return buildPaths_lowSpkEnd2Stop(false); }
+    public PathChain buildPaths_lowSpkEnd2Stop(boolean mirror) {
+        Pose lowSpkEnd = mirror ? this.lowSpkEnd.mirror() : this.lowSpkEnd;
+        Pose stopPose = mirror ? this.stopPose.mirror() : this.stopPose;
         return follower.pathBuilder() // move to stop position
                 .addPath(new BezierLine(lowSpkEnd, stopPose))
                 .setLinearHeadingInterpolation(lowSpkEnd.getHeading(), stopPose.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_gatePos2Contact() {
+    public PathChain buildPaths_gatePos2Contact() { return buildPaths_gatePos2Contact(false); }
+    public PathChain buildPaths_gatePos2Contact(boolean mirror) {
+        Pose gatePose = mirror ? this.gatePose.mirror() : this.gatePose;
+        Pose gateContact = mirror ? this.gateContact.mirror() : this.gateContact;
         return follower.pathBuilder() // move from gate open standby position to contact position
                 .addPath(new BezierLine(gatePose, gateContact))
                 .setLinearHeadingInterpolation(gatePose.getHeading(), gateContact.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_gateContact2Return() {
+    public PathChain buildPaths_gateContact2Return() { return buildPaths_gateContact2Return(false); }
+    public PathChain buildPaths_gateContact2Return(boolean mirror) {
+        Pose gateContact = mirror ? this.gateContact.mirror() : this.gateContact;
+        Pose gateReturn = mirror ? this.gateReturn.mirror() : this.gateReturn;
         return follower.pathBuilder() // move from contact position to gate return position
                 .addPath(new BezierLine(gateContact, gateReturn))
                 .setLinearHeadingInterpolation(gateContact.getHeading(), gateReturn.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_gateReturn2Score() {
+    public PathChain buildPaths_gateReturn2Score() { return buildPaths_gateReturn2Score(false); }
+    public PathChain buildPaths_gateReturn2Score(boolean mirror) {
+        Pose gateReturn = mirror ? this.gateReturn.mirror() : this.gateReturn;
+        Pose scorePose = mirror ? this.scorePose.mirror() : this.scorePose;
         return follower.pathBuilder() // move from gate return position to scoring position
                 .addPath(new BezierLine(gateReturn, scorePose))
                 .setLinearHeadingInterpolation(gateReturn.getHeading(), scorePose.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_gateReturnPos2Stop() {
+    public PathChain buildPaths_gateReturnPos2Stop() { return buildPaths_gateReturnPos2Stop(false); }
+    public PathChain buildPaths_gateReturnPos2Stop(boolean mirror) {
+        Pose gateReturn = mirror ? this.gateReturn.mirror() : this.gateReturn;
+        Pose stopPose = mirror ? this.stopPose.mirror() : this.stopPose;
         return follower.pathBuilder() // move from gate return position to stop position
                 .addPath(new BezierLine(gateReturn, stopPose))
                 .setLinearHeadingInterpolation(gateReturn.getHeading(), stopPose.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_gateReturnPos2HighSpk() {
+    public PathChain buildPaths_gateReturnPos2HighSpk() { return buildPaths_gateReturnPos2HighSpk(false); }
+    public PathChain buildPaths_gateReturnPos2HighSpk(boolean mirror) {
+        Pose gateReturn = mirror ? this.gateReturn.mirror() : this.gateReturn;
+        Pose highSpkPose = mirror ? this.highSpkPose.mirror() : this.highSpkPose;
         return follower.pathBuilder() // move from gate return position to highest spike mark position
                 .addPath(new BezierLine(gateReturn, highSpkPose))
                 .setLinearHeadingInterpolation(gateReturn.getHeading(), highSpkPose.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_gateReturnPos2MidSpk() {
+    public PathChain buildPaths_gateReturnPos2MidSpk() { return buildPaths_gateReturnPos2MidSpk(false); }
+    public PathChain buildPaths_gateReturnPos2MidSpk(boolean mirror) {
+        Pose gateReturn = mirror ? this.gateReturn.mirror() : this.gateReturn;
+        Pose midSpkPose = mirror ? this.midSpkPose.mirror() : this.midSpkPose;
         return follower.pathBuilder() // move from gate return position to middle spike mark position
                 .addPath(new BezierLine(gateReturn, midSpkPose))
                 .setLinearHeadingInterpolation(gateReturn.getHeading(), midSpkPose.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_gateReturnPos2LowSpk() {
+    public PathChain buildPaths_gateReturnPos2LowSpk() { return buildPaths_gateReturnPos2LowSpk(false); }
+    public PathChain buildPaths_gateReturnPos2LowSpk(boolean mirror) {
+        Pose gateReturn = mirror ? this.gateReturn.mirror() : this.gateReturn;
+        Pose lowSpkPose = mirror ? this.lowSpkPose.mirror() : this.lowSpkPose;
         return follower.pathBuilder() // move from gate return position to lowest spike mark position
                 .addPath(new BezierLine(gateReturn, lowSpkPose))
                 .setLinearHeadingInterpolation(gateReturn.getHeading(), lowSpkPose.getHeading())

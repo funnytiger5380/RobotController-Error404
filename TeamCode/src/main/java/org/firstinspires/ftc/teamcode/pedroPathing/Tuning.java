@@ -38,7 +38,7 @@ import java.util.List;
 @TeleOp(name = "Tuning", group = "Pedro Pathing")
 public class Tuning extends SelectableOpMode {
     public static Follower follower;
-    public static Pose startPose = new Pose(72, 72, Math.toRadians(90));
+    public static Pose startPose = new Pose(72, 72, Math.toRadians(0));
 
     @IgnoreConfigurable
     static PoseHistory poseHistory;
