@@ -9,9 +9,12 @@ import com.pedropathing.ftc.drivetrains.Mecanum;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.mechanisms.DigitalSensor;
 import org.firstinspires.ftc.teamcode.mechanisms.IntakeMotor;
 import org.firstinspires.ftc.teamcode.mechanisms.Launcher;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
@@ -42,7 +45,8 @@ import java.util.List;
 public class pedroTeleOp extends OpMode {
     private final double DRIVE_MAX_SPEED = 0.9;
     private final double INTAKE_POWER = 0.75;
-    private final double INTAKE_PANIC_TIME = 0.1;
+    private final double INTAKE_PANIC_TIME = 0.15;
+    private final double LAUNCH_PANIC_TIME = 10.0;
 
     private final double ClOSE_LAUNCH_TARGET_VELOCITY = 1300;
     private final double CLOSE_LAUNCH_MIN_VELOCITY    = 1275;
@@ -74,6 +78,11 @@ public class pedroTeleOp extends OpMode {
             .leftFeederDirection(FORWARD)
             .rightFeederDirection(REVERSE);
 
+    // === Digital sensor ===
+    private final DigitalSensor ballSensor = new DigitalSensor()
+            .sensorName("ball_sensor")
+            .sensorMode(DigitalChannel.Mode.INPUT);
+
     // === Run timer & Misc. ===
     private final ElapsedTime runtime = new ElapsedTime();
     private enum AllianceColor { BLUE, RED, NONE }
@@ -83,6 +92,9 @@ public class pedroTeleOp extends OpMode {
     private boolean isRobotCentric = true;
     private boolean isIMUResetRequested = false;
     private double driveHeadingOffset = 0.0;
+
+    private final ElapsedTime sensorTimer = new ElapsedTime();
+    private boolean isBallDetected = false;
 
     @Override
     public void init() {
@@ -106,6 +118,9 @@ public class pedroTeleOp extends OpMode {
         launcher.setLauncherFarVelocity(FAR_LAUNCH_TARGET_VELOCITY, FAR_LAUNCH_MIN_VELOCITY);
         launcher.setLauncherCoolOffSec(LAUNCH_COOLOFF_SECONDS);
         launcher.setFeederRunSec(FEEDER_RUN_SECONDS);
+
+        /* === Digital sensor === */
+        ballSensor.build(hardwareMap);
     }
 
     @Override
@@ -186,10 +201,30 @@ public class pedroTeleOp extends OpMode {
         intakeMotor.run(intakeOn, intakeOff, panic);
 
         // === Launcher ===
-        boolean closeShotRequested = gamepad1.right_bumper;
-        boolean farShotRequested   = (gamepad1.right_trigger > 0.5);
+        boolean closeShot = gamepad1.right_bumper;
+        boolean farShot   = (gamepad1.right_trigger > 0.5);
 
-        launcher.launch(closeShotRequested, farShotRequested);
+        // === Sensor timer ===
+        if (ballSensor.isDetected()) {
+            isBallDetected = true;
+        } else {
+            isBallDetected = false;
+            sensorTimer.reset();
+        }
+
+        if (closeShot) {
+            if (!ballSensor.isDetected())
+                intakeMotor.setIntakePanic(INTAKE_PANIC_TIME);
+            launcher.launchCloseShot();
+        } else if (farShot) {
+            if (!ballSensor.isDetected())
+                intakeMotor.setIntakePanic(INTAKE_PANIC_TIME);
+            launcher.launchFarShot();
+        }
+        else if (isBallDetected && (sensorTimer.seconds() > LAUNCH_PANIC_TIME)) {
+            launcher.setLauncherPanic();
+            sensorTimer.reset();
+        }
 
         // === Status Output ===
         telemetry.addData("Alliance", alliance.toString());
@@ -198,6 +233,7 @@ public class pedroTeleOp extends OpMode {
         telemetry.addData("Back Motor Power", "left (%.2f), right (%.2f)", motorPower[1], motorPower[3]);
         telemetry.addData("Launcher State", launcher.getState());
         telemetry.addData("Launcher Speed", launcher.getLauncherVelocity());
+        telemetry.addData("Sensor Timer", sensorTimer.toString());
         telemetry.addData("Intake State", intakeMotor.getState());
         telemetry.addData("Intake Direction", intakeMotor.getMotorDirection());
         telemetry.addData("Intake Power", intakeMotor.getPower());
