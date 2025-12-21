@@ -36,7 +36,9 @@ public class bluePedroPathing extends LinearOpMode {
             .leftFeederDirection(FORWARD)
             .rightFeederDirection(REVERSE);
 
-    private final double DRIVE_GRAB_SPEED = 0.5;
+    private final double PATH_SPEED = 0.7;
+    private final double GRAB_SPEED = 0.45;
+    private final double GATE_SPEED = 0.35;
     private final double INTAKE_POWER = 0.75;
     private final double INTAKE_PANIC_TIME = 0.15;
 
@@ -46,7 +48,7 @@ public class bluePedroPathing extends LinearOpMode {
     private final double FAR_LAUNCH_MIN_VELOCITY      = 1580;
     private final double FEEDER_RUN_SECONDS = 0.10;
     private final double LAUNCH_COOL_OFF_SECONDS = 0.20;
-    private final double LAUNCH_INTERVAL_SECONDS = 0.20;
+    private final double LAUNCH_INTERVAL_SECONDS = 0.00;
 
     private Follower follower;
     private TelemetryManager panelsTelemetry;
@@ -54,14 +56,13 @@ public class bluePedroPathing extends LinearOpMode {
 
     private enum PathState {
         START_POSE, SCORE_POSE, HIGH_SPIKE_POSE, GRAB_HIGH_SPIKE, MID_SPIKE_POSE, GRAB_MID_SPIKE,
-        LOW_SPIKE_POSE, GRAB_LOW_SPIKE, GATE_OPEN_POSE, GATE_CONTACT, GATE_RETURN_POSE, STOP_POSE
-    }
-    PathState pathState;
+        LOW_SPIKE_POSE, GRAB_LOW_SPIKE, GATE_OPEN_UP_POSE, GATE_CONTACT_UP_POSE,
+        GATE_OPEN_DOWN_POSE, GATE_CONTACT_DOWN_POSE, GATE_RETURN_POSE, STOP_POSE
+    } PathState pathState;
 
     private enum FollowerAction {
         GO_SHOOT, GRAB_HIGH_SPIKE, GRAB_MID_SPIKE, GRAB_LOW_SPIKE, OPEN_GATE, STOP
-    }
-    FollowerAction followerAction;
+    } FollowerAction followerAction;
 
     LinkedList<bluePedroPathing.FollowerAction> followerActionList;
 
@@ -70,15 +71,17 @@ public class bluePedroPathing extends LinearOpMode {
     private final double H_GOAL_WALL = 144.0;
 
     private final double X_SCORE_POSE = 55.0;
-    private final double Y_SCORE_POSE = 87.5;
-    private final double H_SCORE_POSE = 132.0;
+    private final double Y_SCORE_POSE = 90;
+    private final double H_SCORE_POSE = 130.0;
 
     private final double X_GATE_POSE = 17;
     private final double Y_GATE_POSE = 67.0;
-    private final double H_GATE_POSE = -90.0;
+    private final double H_GATE_POSE_UP = 90.0;
+    private final double H_GATE_POSE_DW = -90.0;
     private final double X_GATE_CONTACT = 15.0;
     private final double Y_GATE_CONTACT = 67.0;
-    private final double H_GATE_CONTACT = -90.0;
+    private final double H_GATE_CONTACT_UP = 90.0;
+    private final double H_GATE_CONTACT_DW = -90.0;
     private final double X_GATE_RETURN = 44.0;
     private final double Y_GATE_RETURN = 67.0;
     private final double H_GATE_RETURN = 20.0;
@@ -111,7 +114,8 @@ public class bluePedroPathing extends LinearOpMode {
     // Initialize elapsed timer in milliseconds
     private final Timer runTime = new Timer();
     private final Timer pathTimer = new Timer();
-    private final Timer panicTimer = new Timer();
+    private final Timer auxTimer = new Timer();
+
 
     // Start Pose. Touching the Goal wall with the robot's left rear outer wheel on the tile intersection.
     private final Pose startPose = new Pose(X_GOAL_WALL, Y_GOAL_WALL, Math.toRadians(H_GOAL_WALL));
@@ -135,8 +139,10 @@ public class bluePedroPathing extends LinearOpMode {
     private final Pose lowSpkEnd = new Pose(X_LOW_SPIKE_LINE_END, Y_LOW_SPIKE_LINE_END, Math.toRadians(H_LOW_SPIKE_LINE_END));
 
     // Gate start and return poses to flex the gate open.
-    private final Pose gatePose = new Pose(X_GATE_POSE, Y_GATE_POSE, Math.toRadians(H_GATE_POSE));
-    private final Pose gateContact = new Pose(X_GATE_CONTACT, Y_GATE_CONTACT, Math.toRadians(H_GATE_CONTACT));
+    private final Pose gatePoseUp = new Pose(X_GATE_POSE, Y_GATE_POSE, Math.toRadians(H_GATE_POSE_UP));
+    private final Pose gatePoseDw = new Pose(X_GATE_POSE, Y_GATE_POSE, Math.toRadians(H_GATE_POSE_DW));
+    private final Pose gateContactUp = new Pose(X_GATE_CONTACT, Y_GATE_CONTACT, Math.toRadians(H_GATE_CONTACT_UP));
+    private final Pose gateContactDw = new Pose(X_GATE_CONTACT, Y_GATE_CONTACT, Math.toRadians(H_GATE_CONTACT_DW));
     private final Pose gateReturn = new Pose(X_GATE_RETURN, Y_GATE_RETURN, Math.toRadians(H_GATE_RETURN));
 
     // Build various path chains
@@ -163,7 +169,7 @@ public class bluePedroPathing extends LinearOpMode {
     public PathChain buildPaths_startPos2Gate() { return buildPaths_startPos2Gate(false); }
     public PathChain buildPaths_startPos2Gate(boolean mirror) {
         Pose startPose = mirror ? this.startPose.mirror() : this.startPose;
-        Pose gatePose = mirror ? this.gatePose.mirror() : this.gatePose;
+        Pose gatePose = mirror ? this.gatePoseUp.mirror() : this.gatePoseUp; // standby pose heading 90 degrees
         return follower.pathBuilder() // move from start position to gate open standby position
                 .addPath(new BezierLine(startPose, gatePose))
                 .setLinearHeadingInterpolation(startPose.getHeading(), gatePose.getHeading())
@@ -213,7 +219,7 @@ public class bluePedroPathing extends LinearOpMode {
     public PathChain buildPaths_scorePos2Gate() { return buildPaths_scorePos2Gate(false); }
     public PathChain buildPaths_scorePos2Gate(boolean mirror) {
         Pose scorePose = mirror ? this.scorePose.mirror() : this.scorePose;
-        Pose gatePose = mirror ? this.gatePose.mirror() : this.gatePose;
+        Pose gatePose = mirror ? this.gatePoseUp.mirror() : this.gatePoseUp; // standby pose heading 90 degrees
         return follower.pathBuilder()// move from scoring position to gate open standby position
                 .addPath(new BezierLine(scorePose, gatePose))
                 .setLinearHeadingInterpolation(scorePose.getHeading(), gatePose.getHeading())
@@ -313,7 +319,7 @@ public class bluePedroPathing extends LinearOpMode {
     public PathChain buildPaths_highSpkEnd2Gate() { return buildPaths_highSpkEnd2Gate(false); }
     public PathChain buildPaths_highSpkEnd2Gate(boolean mirror) {
         Pose highSpkEnd = mirror ? this.highSpkEnd.mirror() : this.highSpkEnd;
-        Pose gatePose = mirror ? this.gatePose.mirror() : this.gatePose;
+        Pose gatePose = mirror ? this.gatePoseUp.mirror() : this.gatePoseUp; // standby pose heading 90 degrees
         return follower.pathBuilder() // move to gate open standby position
                 .addPath(new BezierLine(highSpkEnd, gatePose))
                 .setLinearHeadingInterpolation(highSpkEnd.getHeading(), gatePose.getHeading())
@@ -323,7 +329,7 @@ public class bluePedroPathing extends LinearOpMode {
     public PathChain buildPaths_midSpkEnd2Gate() { return buildPaths_midSpkEnd2Gate(false); }
     public PathChain buildPaths_midSpkEnd2Gate(boolean mirror) {
         Pose midSpkEnd = mirror ? this.midSpkEnd.mirror() : this.midSpkEnd;
-        Pose gatePose = mirror ? this.gatePose.mirror() : this.gatePose;
+        Pose gatePose = mirror ? this.gatePoseDw.mirror() : this.gatePoseDw; // standby pose heading -90 degrees
         return follower.pathBuilder() // move to gate open standby position
                 .addPath(new BezierLine(midSpkEnd, gatePose))
                 .setLinearHeadingInterpolation(midSpkEnd.getHeading(), gatePose.getHeading())
@@ -333,7 +339,7 @@ public class bluePedroPathing extends LinearOpMode {
     public PathChain buildPaths_lowSpkEnd2Gate() { return buildPaths_lowSpkEnd2Gate(false); }
     public PathChain buildPaths_lowSpkEnd2Gate(boolean mirror) {
         Pose lowSpkEnd = mirror ? this.lowSpkEnd.mirror() : this.lowSpkEnd;
-        Pose gatePose = mirror ? this.gatePose.mirror() : this.gatePose;
+        Pose gatePose = mirror ? this.gatePoseDw.mirror() : this.gatePoseDw; // standby pose heading -90 degrees
         return follower.pathBuilder() // move to gate open standby position
                 .addPath(new BezierLine(lowSpkEnd, gatePose))
                 .setLinearHeadingInterpolation(lowSpkEnd.getHeading(), gatePose.getHeading())
@@ -370,19 +376,39 @@ public class bluePedroPathing extends LinearOpMode {
                 .build();
     }
 
-    public PathChain buildPaths_gatePos2Contact() { return buildPaths_gatePos2Contact(false); }
-    public PathChain buildPaths_gatePos2Contact(boolean mirror) {
-        Pose gatePose = mirror ? this.gatePose.mirror() : this.gatePose;
-        Pose gateContact = mirror ? this.gateContact.mirror() : this.gateContact;
+    public PathChain buildPaths_gatePosUp2Contact() { return buildPaths_gatePosUp2Contact(false); }
+    public PathChain buildPaths_gatePosUp2Contact(boolean mirror) {
+        Pose gatePose = mirror ? this.gatePoseUp.mirror() : this.gatePoseUp;
+        Pose gateContact = mirror ? this.gateContactUp.mirror() : this.gateContactUp;
         return follower.pathBuilder() // move from gate open standby position to contact position
                 .addPath(new BezierLine(gatePose, gateContact))
                 .setLinearHeadingInterpolation(gatePose.getHeading(), gateContact.getHeading())
                 .build();
     }
 
-    public PathChain buildPaths_gateContact2Return() { return buildPaths_gateContact2Return(false); }
-    public PathChain buildPaths_gateContact2Return(boolean mirror) {
-        Pose gateContact = mirror ? this.gateContact.mirror() : this.gateContact;
+    public PathChain buildPaths_gatePosDw2Contact() { return buildPaths_gatePosDw2Contact(false); }
+    public PathChain buildPaths_gatePosDw2Contact(boolean mirror) {
+        Pose gatePose = mirror ? this.gatePoseDw.mirror() : this.gatePoseDw;
+        Pose gateContact = mirror ? this.gateContactDw.mirror() : this.gateContactDw;
+        return follower.pathBuilder() // move from gate open standby position to contact position
+                .addPath(new BezierLine(gatePose, gateContact))
+                .setLinearHeadingInterpolation(gatePose.getHeading(), gateContact.getHeading())
+                .build();
+    }
+
+    public PathChain buildPaths_gateContactUp2Return() { return buildPaths_gateContactUp2Return(false); }
+    public PathChain buildPaths_gateContactUp2Return(boolean mirror) {
+        Pose gateContact = mirror ? this.gateContactUp.mirror() : this.gateContactUp;
+        Pose gateReturn = mirror ? this.gateReturn.mirror() : this.gateReturn;
+        return follower.pathBuilder() // move from contact position to gate return position
+                .addPath(new BezierLine(gateContact, gateReturn))
+                .setLinearHeadingInterpolation(gateContact.getHeading(), gateReturn.getHeading())
+                .build();
+    }
+
+    public PathChain buildPaths_gateContactDw2Return() { return buildPaths_gateContactDw2Return(false); }
+    public PathChain buildPaths_gateContactDw2Return(boolean mirror) {
+        Pose gateContact = mirror ? this.gateContactDw.mirror() : this.gateContactDw;
         Pose gateReturn = mirror ? this.gateReturn.mirror() : this.gateReturn;
         return follower.pathBuilder() // move from contact position to gate return position
                 .addPath(new BezierLine(gateContact, gateReturn))
@@ -460,13 +486,17 @@ public class bluePedroPathing extends LinearOpMode {
         // Initialize Pedro Pathing follower
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(startPose);
-        setPathState(PathState.START_POSE);
 
         // Initialize follower action list
         followerActionList = new LinkedList<>();
         followerActionList.add(FollowerAction.GO_SHOOT);
-        followerActionList.add(FollowerAction.GRAB_HIGH_SPIKE);
+        //followerActionList.add(FollowerAction.GRAB_HIGH_SPIKE);
+        //followerActionList.add(FollowerAction.GO_SHOOT);
+        followerActionList.add(FollowerAction.GRAB_MID_SPIKE);
+        followerActionList.add(FollowerAction.OPEN_GATE);
         followerActionList.add(FollowerAction.GO_SHOOT);
+        //followerActionList.add(FollowerAction.GRAB_HIGH_SPIKE);
+        //followerActionList.add(FollowerAction.GO_SHOOT);
         followerActionList.add(FollowerAction.STOP);
 
         // Log completed initialization to Panels and driver station (custom log function)
@@ -475,15 +505,19 @@ public class bluePedroPathing extends LinearOpMode {
 
         waitForStart();
         runTime.resetTimer();
+        nextFollowerAction();
+        setPathState(PathState.START_POSE);
 
         while (opModeIsActive()) {
             // Update Pedro Pathing and Panels every iteration
             follower.update();
             panelsTelemetry.update();
-            currentPose = follower.getPose(); // Update the current pose
+            currentPose = follower.getPose(); // Get the current pose
 
-            // Follower drive through the given pathing
-            updatePathState();
+            if (runTime.getElapsedTimeSeconds() > 30) // Stop after 30 seconds
+                terminateOpModeNow();
+            else
+                updatePathState(); // Follower drives through the given pathing
 
             // Log to Panels and driver station (custom log function)
             log("RunTime", runTime.toString());
@@ -509,26 +543,24 @@ public class bluePedroPathing extends LinearOpMode {
         } else {
             switch (pathState) {
                 case START_POSE:
-                    nextFollowerAction();
-
                     if (followerAction == FollowerAction.GO_SHOOT) {
                         intakeMotor.setIntakeOn();
-                        follower.followPath(buildPaths_startPos2Score());
+                        follower.followPath(buildPaths_startPos2Score(),PATH_SPEED,true);
                         setPathState(PathState.SCORE_POSE);
                     } else if (followerAction == FollowerAction.STOP) {
-                        follower.followPath(buildPaths_startPos2Stop());
+                        follower.followPath(buildPaths_startPos2Stop(),PATH_SPEED,true);
                         setPathState(PathState.STOP_POSE);
                     } else if (followerAction == FollowerAction.OPEN_GATE) {
-                        follower.followPath(buildPaths_startPos2Gate());
-                        setPathState(PathState.GATE_OPEN_POSE);
+                        follower.followPath(buildPaths_startPos2Gate(),PATH_SPEED,true);
+                        setPathState(PathState.GATE_OPEN_UP_POSE);
                     } else if (followerAction == FollowerAction.GRAB_HIGH_SPIKE) {
-                        follower.followPath(buildPaths_startPos2HighSpkSet());
+                        follower.followPath(buildPaths_startPos2HighSpkSet(),PATH_SPEED,true);
                         setPathState(PathState.HIGH_SPIKE_POSE);
                     } else if (followerAction == FollowerAction.GRAB_MID_SPIKE) {
-                        follower.followPath(buildPaths_startPos2MidSpkSet());
+                        follower.followPath(buildPaths_startPos2MidSpkSet(),PATH_SPEED,true);
                         setPathState(PathState.MID_SPIKE_POSE);
                     } else if (followerAction == FollowerAction.GRAB_LOW_SPIKE) {
-                        follower.followPath(buildPaths_startPos2LowSpkSet());
+                        follower.followPath(buildPaths_startPos2LowSpkSet(),PATH_SPEED,true);
                         setPathState(PathState.LOW_SPIKE_POSE);
                     }
                     break;
@@ -540,19 +572,19 @@ public class bluePedroPathing extends LinearOpMode {
                         nextFollowerAction(); // get the next follower action
 
                         if (followerAction == FollowerAction.STOP) {
-                            follower.followPath(buildPaths_scorePos2Stop());
+                            follower.followPath(buildPaths_scorePos2Stop(),PATH_SPEED,true);
                             setPathState(PathState.STOP_POSE);
                         } else if (followerAction == FollowerAction.OPEN_GATE) {
-                            follower.followPath(buildPaths_scorePos2Gate());
-                            setPathState(PathState.GATE_OPEN_POSE);
+                            follower.followPath(buildPaths_scorePos2Gate(),PATH_SPEED,true);
+                            setPathState(PathState.GATE_OPEN_UP_POSE);
                         } else if (followerAction == FollowerAction.GRAB_HIGH_SPIKE) {
-                            follower.followPath(buildPaths_scorePos2HighSpk());
+                            follower.followPath(buildPaths_scorePos2HighSpk(),PATH_SPEED,true);
                             setPathState(PathState.HIGH_SPIKE_POSE);
                         } else if (followerAction == FollowerAction.GRAB_MID_SPIKE) {
-                            follower.followPath(buildPaths_scorePos2MidSpk());
+                            follower.followPath(buildPaths_scorePos2MidSpk(),PATH_SPEED,true);
                             setPathState(PathState.MID_SPIKE_POSE);
                         } else if (followerAction == FollowerAction.GRAB_LOW_SPIKE) {
-                            follower.followPath(buildPaths_scorePos2LowSpk());
+                            follower.followPath(buildPaths_scorePos2LowSpk(),PATH_SPEED,true);
                             setPathState(PathState.LOW_SPIKE_POSE);
                         }
                     }
@@ -561,7 +593,7 @@ public class bluePedroPathing extends LinearOpMode {
                 case HIGH_SPIKE_POSE:
                     if (!follower.isBusy()) {
                         intakeMotor.setIntakeOn();
-                        follower.followPath(buildPaths_highSpkPos2GrabEnd(), DRIVE_GRAB_SPEED, true);
+                        follower.followPath(buildPaths_highSpkPos2GrabEnd(),GRAB_SPEED,true);
                         setPathState(PathState.GRAB_HIGH_SPIKE);
                     }
                     break;
@@ -569,7 +601,7 @@ public class bluePedroPathing extends LinearOpMode {
                 case MID_SPIKE_POSE:
                     if (!follower.isBusy()) {
                         intakeMotor.setIntakeOn();
-                        follower.followPath(buildPaths_midSpkPos2GrabEnd(), DRIVE_GRAB_SPEED, true);
+                        follower.followPath(buildPaths_midSpkPos2GrabEnd(),GRAB_SPEED,true);
                         setPathState(PathState.GRAB_MID_SPIKE);
                     }
                     break;
@@ -577,7 +609,7 @@ public class bluePedroPathing extends LinearOpMode {
                 case LOW_SPIKE_POSE:
                     if (!follower.isBusy()) {
                         intakeMotor.setIntakeOn();
-                        follower.followPath(buildPaths_lowSpkPos2GrabEnd(), DRIVE_GRAB_SPEED, true);
+                        follower.followPath(buildPaths_lowSpkPos2GrabEnd(),GRAB_SPEED,true);
                         setPathState(PathState.GRAB_LOW_SPIKE);
                     }
                     break;
@@ -587,14 +619,14 @@ public class bluePedroPathing extends LinearOpMode {
                         nextFollowerAction(); // get the next follower action
 
                         if (followerAction == FollowerAction.GO_SHOOT) {
-                            follower.followPath(buildPaths_highSpkEnd2Score());
+                            follower.followPath(buildPaths_highSpkEnd2Score(),PATH_SPEED,true);
                             setPathState(PathState.SCORE_POSE);
                         } else if (followerAction == FollowerAction.STOP) {
-                            follower.followPath(buildPaths_highSpkEnd2Stop());
+                            follower.followPath(buildPaths_highSpkEnd2Stop(),PATH_SPEED,true);
                             setPathState(PathState.STOP_POSE);
                         } else if (followerAction == FollowerAction.OPEN_GATE) {
-                            follower.followPath(buildPaths_highSpkEnd2Gate());
-                            setPathState(PathState.GATE_OPEN_POSE);
+                            follower.followPath(buildPaths_highSpkEnd2Gate(),GATE_SPEED,true);
+                            setPathState(PathState.GATE_OPEN_UP_POSE);
                         }
                     }
                     break;
@@ -604,14 +636,14 @@ public class bluePedroPathing extends LinearOpMode {
                         nextFollowerAction(); // get the next follower action
 
                         if (followerAction == FollowerAction.GO_SHOOT) {
-                            follower.followPath(buildPaths_midSpkEnd2Score());
+                            follower.followPath(buildPaths_midSpkEnd2Score(),PATH_SPEED,true);
                             setPathState(PathState.SCORE_POSE);
                         } else if (followerAction == FollowerAction.STOP) {
-                            follower.followPath(buildPaths_midSpkEnd2Stop());
+                            follower.followPath(buildPaths_midSpkEnd2Stop(),PATH_SPEED,true);
                             setPathState(PathState.STOP_POSE);
                         } else if (followerAction == FollowerAction.OPEN_GATE) {
-                            follower.followPath(buildPaths_midSpkEnd2Gate());
-                            setPathState(PathState.GATE_OPEN_POSE);
+                            follower.followPath(buildPaths_midSpkEnd2Gate(),GATE_SPEED,true);
+                            setPathState(PathState.GATE_OPEN_DOWN_POSE);
                         }
                     }
                     break;
@@ -621,28 +653,41 @@ public class bluePedroPathing extends LinearOpMode {
                         nextFollowerAction(); // get the next follower action
 
                         if (followerAction == FollowerAction.GO_SHOOT) {
-                            follower.followPath(buildPaths_lowSpkEnd2Score());
-                            setPathState(PathState.SCORE_POSE);
+                            follower.followPath(buildPaths_lowSpkEnd2Score(),PATH_SPEED,true);
                         } else if (followerAction == FollowerAction.STOP) {
-                            follower.followPath(buildPaths_lowSpkEnd2Stop());
+                            follower.followPath(buildPaths_lowSpkEnd2Stop(),PATH_SPEED,true);
                             setPathState(PathState.STOP_POSE);
                         } else if (followerAction == FollowerAction.OPEN_GATE) {
-                            follower.followPath(buildPaths_lowSpkEnd2Gate());
-                            setPathState(PathState.GATE_OPEN_POSE);
+                            follower.followPath(buildPaths_lowSpkEnd2Gate(),GATE_SPEED,true);
+                            setPathState(PathState.GATE_OPEN_DOWN_POSE);
                         }
                     }
                     break;
 
-                case GATE_OPEN_POSE:
+                case GATE_OPEN_UP_POSE:
                     if (!follower.isBusy()) {
-                        follower.followPath(buildPaths_gatePos2Contact());
-                        setPathState(PathState.GATE_CONTACT);
+                        follower.followPath(buildPaths_gatePosUp2Contact(),GATE_SPEED,true);
+                        setPathState(PathState.GATE_CONTACT_UP_POSE);
                     }
                     break;
 
-                case GATE_CONTACT:
+                case GATE_OPEN_DOWN_POSE:
                     if (!follower.isBusy()) {
-                        follower.followPath(buildPaths_gateContact2Return());
+                        follower.followPath(buildPaths_gatePosDw2Contact(),GATE_SPEED,true);
+                        setPathState(PathState.GATE_CONTACT_DOWN_POSE);
+                    }
+                    break;
+
+                case GATE_CONTACT_UP_POSE:
+                    if (!follower.isBusy()) {
+                        follower.followPath(buildPaths_gateContactUp2Return(),PATH_SPEED,true);
+                        setPathState(PathState.GATE_RETURN_POSE);
+                    }
+                    break;
+
+                case GATE_CONTACT_DOWN_POSE:
+                    if (!follower.isBusy()) {
+                        follower.followPath(buildPaths_gateContactDw2Return(),PATH_SPEED,true);
                         setPathState(PathState.GATE_RETURN_POSE);
                     }
                     break;
@@ -652,19 +697,19 @@ public class bluePedroPathing extends LinearOpMode {
                         nextFollowerAction();
 
                         if (followerAction == FollowerAction.GO_SHOOT) {
-                            follower.followPath(buildPaths_gateReturn2Score());
+                            follower.followPath(buildPaths_gateReturn2Score(),PATH_SPEED,true);
                             setPathState(PathState.SCORE_POSE);
                         } else if (followerAction == FollowerAction.STOP) {
-                            follower.followPath(buildPaths_gateReturnPos2Stop());
+                            follower.followPath(buildPaths_gateReturnPos2Stop(),PATH_SPEED,true);
                             setPathState(PathState.STOP_POSE);
                         } else if (followerAction == FollowerAction.GRAB_HIGH_SPIKE) {
-                            follower.followPath(buildPaths_gateReturnPos2HighSpk());
+                            follower.followPath(buildPaths_gateReturnPos2HighSpk(),PATH_SPEED,true);
                             setPathState(PathState.HIGH_SPIKE_POSE);
                         } else if (followerAction == FollowerAction.GRAB_MID_SPIKE) {
-                            follower.followPath(buildPaths_gateReturnPos2MidSpk());
+                            follower.followPath(buildPaths_gateReturnPos2MidSpk(),PATH_SPEED,true);
                             setPathState(PathState.MID_SPIKE_POSE);
                         } else if (followerAction == FollowerAction.GRAB_LOW_SPIKE) {
-                            follower.followPath(buildPaths_gateReturnPos2LowSpk());
+                            follower.followPath(buildPaths_gateReturnPos2LowSpk(),PATH_SPEED,true);
                             setPathState(PathState.LOW_SPIKE_POSE);
                         }
                     }
@@ -685,27 +730,27 @@ public class bluePedroPathing extends LinearOpMode {
     }
 
     private void customLaunchCloseShot() {
-        panicTimer.resetTimer();
         intakeMotor.setIntakePanic(INTAKE_PANIC_TIME);
         launcher.launchCloseShot();
     }
 
     private void customLaunchCloseShot(int count, double interval) {
         for (int i = 0; i < count; i++) {
-            do {} while (pathTimer.getElapsedTimeSeconds() < interval);
+            auxTimer.resetTimer();
+            do {} while (auxTimer.getElapsedTimeSeconds() < interval);
             customLaunchCloseShot();
         }
     }
 
     private void customLaunchFarShot() {
-        panicTimer.resetTimer();
         intakeMotor.setIntakePanic(INTAKE_PANIC_TIME);
         launcher.launchFarShot();
     }
 
     private void customLaunchFarShot(int count, double interval) {
         for (int i = 0; i < count; i++) {
-            do {} while (pathTimer.getElapsedTimeSeconds() < interval);
+            auxTimer.resetTimer();
+            do {} while (auxTimer.getElapsedTimeSeconds() < interval);
             customLaunchFarShot();
         }
     }
