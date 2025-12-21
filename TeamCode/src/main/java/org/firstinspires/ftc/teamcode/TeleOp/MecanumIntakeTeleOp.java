@@ -6,9 +6,11 @@ import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.mechanisms.DigitalSensor;
 import org.firstinspires.ftc.teamcode.mechanisms.IntakeMotor;
 import org.firstinspires.ftc.teamcode.mechanisms.Launcher;
 import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
@@ -75,6 +77,11 @@ public class MecanumIntakeTeleOp extends OpMode {
             .leftFeederDirection(FORWARD)
             .rightFeederDirection(REVERSE);
 
+    // === Digital sensor ===
+    private final DigitalSensor ballSensor = new DigitalSensor()
+            .sensorName("ball_sensor")
+            .sensorMode(DigitalChannel.Mode.INPUT);
+
     // === Run timer & Misc. ===
     private final ElapsedTime runtime = new ElapsedTime();
     private enum Alliance { BLUE, RED, NONE }
@@ -105,6 +112,9 @@ public class MecanumIntakeTeleOp extends OpMode {
         launcher.setLauncherFarVelocity(FAR_LAUNCH_TARGET_VELOCITY, FAR_LAUNCH_MIN_VELOCITY);
         launcher.setLauncherCoolOffSec(LAUNCH_COOLOFF_SECONDS);
         launcher.setFeederRunSec(FEEDER_RUN_SECONDS);
+
+        /* === Digital sensor === */
+        ballSensor.build(hardwareMap);
     }
 
     @Override
@@ -174,10 +184,18 @@ public class MecanumIntakeTeleOp extends OpMode {
         intakeMotor.run(intakeOn, intakeOff, panic);
 
         // === Launcher ===
-        boolean closeShotRequested = gamepad1.right_bumper;
-        boolean farShotRequested   = (gamepad1.right_trigger > 0.5);
+        boolean closeShot = gamepad1.right_bumper;
+        boolean farShot   = (gamepad1.right_trigger > 0.5);
 
-        launcher.launch(closeShotRequested, farShotRequested);
+        if (closeShot) {
+            if (!ballSensor.isDetected())
+                intakeMotor.setIntakePanic(INTAKE_PANIC_TIME);
+            launcher.launchCloseShot();
+        } else if (farShot) {
+            if (!ballSensor.isDetected())
+                intakeMotor.setIntakePanic(INTAKE_PANIC_TIME);
+            launcher.launchFarShot();
+        }
 
         // === Status Output ===
         telemetry.addData("Alliance", alliance.toString());

@@ -37,7 +37,7 @@ public class Launcher {
     private double launcherCoolOffSec = 0.20;
 
     // === Launcher state machine ===
-    private enum LaunchState { IDLE, SPIN_UP_F, SPIN_UP_C, LAUNCH, LAUNCHING, COOL_OFF }
+    private enum LaunchState { IDLE, PANIC, SPIN_UP_F, SPIN_UP_C, LAUNCH, LAUNCHING, COOL_OFF }
     private LaunchState launchState = LaunchState.IDLE;
     private boolean isBusy = false;
 
@@ -101,12 +101,26 @@ public class Launcher {
         launcher.setDirection(motorDirection);
     }
 
+    public DcMotorSimple.Direction getMotorDirection() {
+        return launcherDirection;
+    }
+
     public void setLeftFeederDirection(DcMotorSimple.Direction motorDirection) {
+        leftFeederDirection = motorDirection;
         leftFeeder.setDirection(motorDirection);
     }
 
     public void setRightFeederDirection(DcMotorSimple.Direction motorDirection) {
+        rightFeederDirection = motorDirection;
         rightFeeder.setDirection(motorDirection);
+    }
+
+    public DcMotorSimple.Direction getLeftFeederDirection() {
+        return leftFeederDirection;
+    }
+
+    public DcMotorSimple.Direction getRightFeederDirection() {
+        return rightFeederDirection;
     }
 
     public boolean isBusy() {
@@ -114,15 +128,23 @@ public class Launcher {
     }
 
     public void setLauncherOff() {
-        launch(false, false);
+        launch(false, false, false);
         launcher.setVelocity(0.0);
+    }
+
+    public void setLauncherPanic() {
+        if (!isBusy()) {
+            launch(false, false, true);
+            while (isBusy())
+                launch(false, false, false);
+        }
     }
 
     public void launchCloseShot() {
         while (!isBusy())
-            launch(true, false);
+            launch(true, false, false);
         while (isBusy())
-            launch(false, false);
+            launch(false, false, false);
     }
 
     public void launchCloseShot(int count) {
@@ -132,9 +154,9 @@ public class Launcher {
 
     public void launchFarShot() {
         while (!isBusy())
-            launch(false, true);
+            launch(false, true, false);
         while (isBusy())
-            launch(false, false);
+            launch(false, false, false);
     }
 
     public void launchFarShot(int count) {
@@ -142,7 +164,7 @@ public class Launcher {
             launchFarShot();
     }
 
-    public void launch(boolean closeShotRequested, boolean farShotRequested) {
+    public void launch(boolean closeShotRequested, boolean farShotRequested, boolean panicRequested) {
         switch (launchState) {
             case IDLE:
                 if (closeShotRequested) {
@@ -151,9 +173,26 @@ public class Launcher {
                 } else if (farShotRequested) {
                     isBusy = true;
                     launchState = LaunchState.SPIN_UP_F;
+                } else if (panicRequested) {
+                    isBusy = true;
+                    setLeftFeederDirection(leftFeederDirection.inverted());
+                    setRightFeederDirection(rightFeederDirection.inverted());
+                    leftFeeder.setPower(1.0);
+                    rightFeeder.setPower(1.0);
+                    feederTimer.reset();
+                    launchState = LaunchState.PANIC;
                 } else {
                     isBusy = false;
                     launcher.setVelocity(0.0);
+                }
+                break;
+            case PANIC:
+                if (feederTimer.seconds() > feederRunSec) {
+                    leftFeeder.setPower(0.0);
+                    rightFeeder.setPower(0.0);
+                    setLeftFeederDirection(leftFeederDirection.inverted());
+                    setRightFeederDirection(rightFeederDirection.inverted());
+                    launchState = LaunchState.IDLE;
                 }
                 break;
             case SPIN_UP_C:

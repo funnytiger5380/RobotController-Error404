@@ -21,7 +21,7 @@ public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
             .forwardZeroPowerAcceleration(-25.39047) // from tuning
             .lateralZeroPowerAcceleration(-48.92773) // from tuning
-            .translationalPIDFCoefficients(new PIDFCoefficients(0.1,0,0,0.025)) // from tuning
+            .translationalPIDFCoefficients(new PIDFCoefficients(0.09,0,0.01,0.03)) // from tuning
             .headingPIDFCoefficients(new PIDFCoefficients(0.8,0,0,0.02)) // from tuning
             .automaticHoldEnd(true)
             .mass(11.0); // weight in kilogram
