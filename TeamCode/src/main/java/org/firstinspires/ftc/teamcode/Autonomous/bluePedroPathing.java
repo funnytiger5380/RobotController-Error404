@@ -12,7 +12,9 @@ import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 
+import org.firstinspires.ftc.teamcode.mechanisms.DigitalSensor;
 import org.firstinspires.ftc.teamcode.mechanisms.IntakeMotor;
 import org.firstinspires.ftc.teamcode.mechanisms.Launcher;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
@@ -36,6 +38,10 @@ public class bluePedroPathing extends LinearOpMode {
             .leftFeederDirection(FORWARD)
             .rightFeederDirection(REVERSE);
 
+    private final DigitalSensor ballSensor = new DigitalSensor()
+            .sensorName("ball_sensor")
+            .sensorMode(DigitalChannel.Mode.INPUT);
+
     private final double PATH_SPEED = 0.7;
     private final double GRAB_SPEED = 0.45;
     private final double GATE_SPEED = 0.35;
@@ -48,7 +54,7 @@ public class bluePedroPathing extends LinearOpMode {
     private final double FAR_LAUNCH_MIN_VELOCITY      = 1580;
     private final double FEEDER_RUN_SECONDS = 0.10;
     private final double LAUNCH_COOL_OFF_SECONDS = 0.20;
-    private final double LAUNCH_INTERVAL_SECONDS = 0.00;
+    private final double LAUNCH_INTERVAL_SECONDS = 0.10;
 
     private Follower follower;
     private TelemetryManager panelsTelemetry;
@@ -115,7 +121,6 @@ public class bluePedroPathing extends LinearOpMode {
     private final Timer runTime = new Timer();
     private final Timer pathTimer = new Timer();
     private final Timer auxTimer = new Timer();
-
 
     // Start Pose. Touching the Goal wall with the robot's left rear outer wheel on the tile intersection.
     private final Pose startPose = new Pose(X_GOAL_WALL, Y_GOAL_WALL, Math.toRadians(H_GOAL_WALL));
@@ -730,7 +735,8 @@ public class bluePedroPathing extends LinearOpMode {
     }
 
     private void customLaunchCloseShot() {
-        intakeMotor.setIntakePanic(INTAKE_PANIC_TIME);
+        if (!ballSensor.isDetected())
+            intakeMotor.setIntakePanic(INTAKE_PANIC_TIME);
         launcher.launchCloseShot();
     }
 
@@ -743,7 +749,8 @@ public class bluePedroPathing extends LinearOpMode {
     }
 
     private void customLaunchFarShot() {
-        intakeMotor.setIntakePanic(INTAKE_PANIC_TIME);
+        if (!ballSensor.isDetected())
+            intakeMotor.setIntakePanic(INTAKE_PANIC_TIME);
         launcher.launchFarShot();
     }
 
