@@ -42,19 +42,21 @@ public class bluePedroPathing extends LinearOpMode {
             .sensorName("ball_sensor")
             .sensorMode(DigitalChannel.Mode.INPUT);
 
-    private final double PATH_SPEED = 0.7;
-    private final double GRAB_SPEED = 0.45;
+    private final double PATH_SPEED = 0.75;
+    private final double GRAB_SPEED = 0.35;
     private final double GATE_SPEED = 0.35;
     private final double INTAKE_POWER = 0.75;
     private final double INTAKE_PANIC_TIME = 0.15;
 
     private final double ClOSE_LAUNCH_TARGET_VELOCITY = 1300;
-    private final double CLOSE_LAUNCH_MIN_VELOCITY    = 1275;
+    private final double CLOSE_LAUNCH_MIN_VELOCITY    = 1280;
     private final double FAR_LAUNCH_TARGET_VELOCITY   = 1600;
     private final double FAR_LAUNCH_MIN_VELOCITY      = 1580;
     private final double FEEDER_RUN_SECONDS = 0.10;
     private final double LAUNCH_COOL_OFF_SECONDS = 0.20;
-    private final double LAUNCH_INTERVAL_SECONDS = 0.10;
+    private final double LAUNCH_INTERVAL_SECONDS = 0.15;
+
+    private boolean isPathMirror = false;
 
     private Follower follower;
     private TelemetryManager panelsTelemetry;
@@ -72,50 +74,50 @@ public class bluePedroPathing extends LinearOpMode {
 
     LinkedList<bluePedroPathing.FollowerAction> followerActionList;
 
-    private final double X_GOAL_WALL = 25.0;
-    private final double Y_GOAL_WALL = 128.0;
+    private final double X_GOAL_WALL = 24.5;
+    private final double Y_GOAL_WALL = 126.5;
     private final double H_GOAL_WALL = 144.0;
 
     private final double X_SCORE_POSE = 55.0;
-    private final double Y_SCORE_POSE = 90;
-    private final double H_SCORE_POSE = 130.0;
+    private final double Y_SCORE_POSE = 91.0;
+    private final double H_SCORE_POSE = 140.0;
 
-    private final double X_GATE_POSE = 17;
-    private final double Y_GATE_POSE = 67.0;
+    private final double X_GATE_POSE = 17.5;
+    private final double Y_GATE_POSE = 69.0;
     private final double H_GATE_POSE_UP = 90.0;
     private final double H_GATE_POSE_DW = -90.0;
-    private final double X_GATE_CONTACT = 15.0;
-    private final double Y_GATE_CONTACT = 67.0;
+    private final double X_GATE_CONTACT = 14;
+    private final double Y_GATE_CONTACT = 69.0;
     private final double H_GATE_CONTACT_UP = 90.0;
     private final double H_GATE_CONTACT_DW = -90.0;
     private final double X_GATE_RETURN = 44.0;
-    private final double Y_GATE_RETURN = 67.0;
+    private final double Y_GATE_RETURN = 69.0;
     private final double H_GATE_RETURN = 20.0;
 
     private final double X_HIGH_SPIKE_LINE_START = 44.0;
-    private final double Y_HIGH_SPIKE_LINE_START = 83.5;
+    private final double Y_HIGH_SPIKE_LINE_START = 84.0;
     private final double H_HIGH_SPIKE_LINE_START = 180.0;
-    private final double X_HIGH_SPIKE_LINE_END = 17.0;
-    private final double Y_HIGH_SPIKE_LINE_END = 83.5;
+    private final double X_HIGH_SPIKE_LINE_END = 17.5;
+    private final double Y_HIGH_SPIKE_LINE_END = 84.0;
     private final double H_HIGH_SPIKE_LINE_END = 180.0;
 
     private final double X_MID_SPIKE_LINE_START = 44.0;
-    private final double Y_MID_SPIKE_LINE_START = 59.5;
+    private final double Y_MID_SPIKE_LINE_START = 60.0;
     private final double H_MID_SPIKE_LINE_START = 180.0;
-    private final double X_MID_SPIKE_LINE_END = 17.0;
-    private final double Y_MID_SPIKE_LINE_END = 59.5;
+    private final double X_MID_SPIKE_LINE_END = 16.5;
+    private final double Y_MID_SPIKE_LINE_END = 60.0;
     private final double H_MID_SPIKE_LINE_END = 180.0;
 
     private final double X_LOW_SPIKE_LINE_START = 44.0;
-    private final double Y_LOW_SPIKE_LINE_START = 35.5;
+    private final double Y_LOW_SPIKE_LINE_START = 36.0;
     private final double H_LOW_SPIKE_LINE_START = 180.0;
-    private final double X_LOW_SPIKE_LINE_END = 17.0;
-    private final double Y_LOW_SPIKE_LINE_END = 35.5;
+    private final double X_LOW_SPIKE_LINE_END = 16.5;
+    private final double Y_LOW_SPIKE_LINE_END = 36.0;
     private final double H_LOW_SPIKE_LINE_END = 180.0;
 
-    private final double X_STOP_POINT = 44.0;
-    private final double Y_STOP_POINT = 67.0;
-    private final double H_STOP_POINT = 0.0;
+    private final double X_STOP_POINT = 55.0;
+    private final double Y_STOP_POINT = 69.0;
+    private final double H_STOP_POINT = 90.0;
 
     // Initialize elapsed timer in milliseconds
     private final Timer runTime = new Timer();
@@ -488,6 +490,9 @@ public class bluePedroPathing extends LinearOpMode {
         launcher.setLauncherCoolOffSec(LAUNCH_COOL_OFF_SECONDS);
         launcher.setFeederRunSec(FEEDER_RUN_SECONDS);
 
+        // Initialize Digital sensor
+        ballSensor.build(hardwareMap);
+
         // Initialize Pedro Pathing follower
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(startPose);
@@ -495,13 +500,13 @@ public class bluePedroPathing extends LinearOpMode {
         // Initialize follower action list
         followerActionList = new LinkedList<>();
         followerActionList.add(FollowerAction.GO_SHOOT);
-        //followerActionList.add(FollowerAction.GRAB_HIGH_SPIKE);
-        //followerActionList.add(FollowerAction.GO_SHOOT);
         followerActionList.add(FollowerAction.GRAB_MID_SPIKE);
         followerActionList.add(FollowerAction.OPEN_GATE);
         followerActionList.add(FollowerAction.GO_SHOOT);
-        //followerActionList.add(FollowerAction.GRAB_HIGH_SPIKE);
-        //followerActionList.add(FollowerAction.GO_SHOOT);
+        followerActionList.add(FollowerAction.GRAB_HIGH_SPIKE);
+        followerActionList.add(FollowerAction.GO_SHOOT);
+        followerActionList.add(FollowerAction.GRAB_LOW_SPIKE);
+        followerActionList.add(FollowerAction.GO_SHOOT);
         followerActionList.add(FollowerAction.STOP);
 
         // Log completed initialization to Panels and driver station (custom log function)
@@ -519,9 +524,9 @@ public class bluePedroPathing extends LinearOpMode {
             panelsTelemetry.update();
             currentPose = follower.getPose(); // Get the current pose
 
-            if (runTime.getElapsedTimeSeconds() > 30) // Stop after 30 seconds
-                terminateOpModeNow();
-            else
+            //if (runTime.getElapsedTimeSeconds() > 30) // Stop after 30 seconds
+            //    terminateOpModeNow();
+            //else
                 updatePathState(); // Follower drives through the given pathing
 
             // Log to Panels and driver station (custom log function)
@@ -550,22 +555,22 @@ public class bluePedroPathing extends LinearOpMode {
                 case START_POSE:
                     if (followerAction == FollowerAction.GO_SHOOT) {
                         intakeMotor.setIntakeOn();
-                        follower.followPath(buildPaths_startPos2Score(),PATH_SPEED,true);
+                        follower.followPath(buildPaths_startPos2Score(isPathMirror),PATH_SPEED,true);
                         setPathState(PathState.SCORE_POSE);
                     } else if (followerAction == FollowerAction.STOP) {
-                        follower.followPath(buildPaths_startPos2Stop(),PATH_SPEED,true);
+                        follower.followPath(buildPaths_startPos2Stop(isPathMirror),PATH_SPEED,true);
                         setPathState(PathState.STOP_POSE);
                     } else if (followerAction == FollowerAction.OPEN_GATE) {
-                        follower.followPath(buildPaths_startPos2Gate(),PATH_SPEED,true);
+                        follower.followPath(buildPaths_startPos2Gate(isPathMirror),PATH_SPEED,true);
                         setPathState(PathState.GATE_OPEN_UP_POSE);
                     } else if (followerAction == FollowerAction.GRAB_HIGH_SPIKE) {
-                        follower.followPath(buildPaths_startPos2HighSpkSet(),PATH_SPEED,true);
+                        follower.followPath(buildPaths_startPos2HighSpkSet(isPathMirror),PATH_SPEED,true);
                         setPathState(PathState.HIGH_SPIKE_POSE);
                     } else if (followerAction == FollowerAction.GRAB_MID_SPIKE) {
-                        follower.followPath(buildPaths_startPos2MidSpkSet(),PATH_SPEED,true);
+                        follower.followPath(buildPaths_startPos2MidSpkSet(isPathMirror),PATH_SPEED,true);
                         setPathState(PathState.MID_SPIKE_POSE);
                     } else if (followerAction == FollowerAction.GRAB_LOW_SPIKE) {
-                        follower.followPath(buildPaths_startPos2LowSpkSet(),PATH_SPEED,true);
+                        follower.followPath(buildPaths_startPos2LowSpkSet(isPathMirror),PATH_SPEED,true);
                         setPathState(PathState.LOW_SPIKE_POSE);
                     }
                     break;
@@ -577,19 +582,19 @@ public class bluePedroPathing extends LinearOpMode {
                         nextFollowerAction(); // get the next follower action
 
                         if (followerAction == FollowerAction.STOP) {
-                            follower.followPath(buildPaths_scorePos2Stop(),PATH_SPEED,true);
+                            follower.followPath(buildPaths_scorePos2Stop(isPathMirror),PATH_SPEED,true);
                             setPathState(PathState.STOP_POSE);
                         } else if (followerAction == FollowerAction.OPEN_GATE) {
-                            follower.followPath(buildPaths_scorePos2Gate(),PATH_SPEED,true);
+                            follower.followPath(buildPaths_scorePos2Gate(isPathMirror),PATH_SPEED,true);
                             setPathState(PathState.GATE_OPEN_UP_POSE);
                         } else if (followerAction == FollowerAction.GRAB_HIGH_SPIKE) {
-                            follower.followPath(buildPaths_scorePos2HighSpk(),PATH_SPEED,true);
+                            follower.followPath(buildPaths_scorePos2HighSpk(isPathMirror),PATH_SPEED,true);
                             setPathState(PathState.HIGH_SPIKE_POSE);
                         } else if (followerAction == FollowerAction.GRAB_MID_SPIKE) {
-                            follower.followPath(buildPaths_scorePos2MidSpk(),PATH_SPEED,true);
+                            follower.followPath(buildPaths_scorePos2MidSpk(isPathMirror),PATH_SPEED,true);
                             setPathState(PathState.MID_SPIKE_POSE);
                         } else if (followerAction == FollowerAction.GRAB_LOW_SPIKE) {
-                            follower.followPath(buildPaths_scorePos2LowSpk(),PATH_SPEED,true);
+                            follower.followPath(buildPaths_scorePos2LowSpk(isPathMirror),PATH_SPEED,true);
                             setPathState(PathState.LOW_SPIKE_POSE);
                         }
                     }
@@ -598,7 +603,7 @@ public class bluePedroPathing extends LinearOpMode {
                 case HIGH_SPIKE_POSE:
                     if (!follower.isBusy()) {
                         intakeMotor.setIntakeOn();
-                        follower.followPath(buildPaths_highSpkPos2GrabEnd(),GRAB_SPEED,true);
+                        follower.followPath(buildPaths_highSpkPos2GrabEnd(isPathMirror),GRAB_SPEED,true);
                         setPathState(PathState.GRAB_HIGH_SPIKE);
                     }
                     break;
@@ -606,7 +611,7 @@ public class bluePedroPathing extends LinearOpMode {
                 case MID_SPIKE_POSE:
                     if (!follower.isBusy()) {
                         intakeMotor.setIntakeOn();
-                        follower.followPath(buildPaths_midSpkPos2GrabEnd(),GRAB_SPEED,true);
+                        follower.followPath(buildPaths_midSpkPos2GrabEnd(isPathMirror),GRAB_SPEED,true);
                         setPathState(PathState.GRAB_MID_SPIKE);
                     }
                     break;
@@ -614,7 +619,7 @@ public class bluePedroPathing extends LinearOpMode {
                 case LOW_SPIKE_POSE:
                     if (!follower.isBusy()) {
                         intakeMotor.setIntakeOn();
-                        follower.followPath(buildPaths_lowSpkPos2GrabEnd(),GRAB_SPEED,true);
+                        follower.followPath(buildPaths_lowSpkPos2GrabEnd(isPathMirror),GRAB_SPEED,true);
                         setPathState(PathState.GRAB_LOW_SPIKE);
                     }
                     break;
@@ -624,13 +629,13 @@ public class bluePedroPathing extends LinearOpMode {
                         nextFollowerAction(); // get the next follower action
 
                         if (followerAction == FollowerAction.GO_SHOOT) {
-                            follower.followPath(buildPaths_highSpkEnd2Score(),PATH_SPEED,true);
+                            follower.followPath(buildPaths_highSpkEnd2Score(isPathMirror),PATH_SPEED,true);
                             setPathState(PathState.SCORE_POSE);
                         } else if (followerAction == FollowerAction.STOP) {
-                            follower.followPath(buildPaths_highSpkEnd2Stop(),PATH_SPEED,true);
+                            follower.followPath(buildPaths_highSpkEnd2Stop(isPathMirror),PATH_SPEED,true);
                             setPathState(PathState.STOP_POSE);
                         } else if (followerAction == FollowerAction.OPEN_GATE) {
-                            follower.followPath(buildPaths_highSpkEnd2Gate(),GATE_SPEED,true);
+                            follower.followPath(buildPaths_highSpkEnd2Gate(isPathMirror),PATH_SPEED,true);
                             setPathState(PathState.GATE_OPEN_UP_POSE);
                         }
                     }
@@ -641,13 +646,13 @@ public class bluePedroPathing extends LinearOpMode {
                         nextFollowerAction(); // get the next follower action
 
                         if (followerAction == FollowerAction.GO_SHOOT) {
-                            follower.followPath(buildPaths_midSpkEnd2Score(),PATH_SPEED,true);
+                            follower.followPath(buildPaths_midSpkEnd2Score(isPathMirror),PATH_SPEED,true);
                             setPathState(PathState.SCORE_POSE);
                         } else if (followerAction == FollowerAction.STOP) {
-                            follower.followPath(buildPaths_midSpkEnd2Stop(),PATH_SPEED,true);
+                            follower.followPath(buildPaths_midSpkEnd2Stop(isPathMirror),PATH_SPEED,true);
                             setPathState(PathState.STOP_POSE);
                         } else if (followerAction == FollowerAction.OPEN_GATE) {
-                            follower.followPath(buildPaths_midSpkEnd2Gate(),GATE_SPEED,true);
+                            follower.followPath(buildPaths_midSpkEnd2Gate(isPathMirror),PATH_SPEED,true);
                             setPathState(PathState.GATE_OPEN_DOWN_POSE);
                         }
                     }
@@ -658,12 +663,12 @@ public class bluePedroPathing extends LinearOpMode {
                         nextFollowerAction(); // get the next follower action
 
                         if (followerAction == FollowerAction.GO_SHOOT) {
-                            follower.followPath(buildPaths_lowSpkEnd2Score(),PATH_SPEED,true);
+                            follower.followPath(buildPaths_lowSpkEnd2Score(isPathMirror),PATH_SPEED,true);
                         } else if (followerAction == FollowerAction.STOP) {
-                            follower.followPath(buildPaths_lowSpkEnd2Stop(),PATH_SPEED,true);
+                            follower.followPath(buildPaths_lowSpkEnd2Stop(isPathMirror),PATH_SPEED,true);
                             setPathState(PathState.STOP_POSE);
                         } else if (followerAction == FollowerAction.OPEN_GATE) {
-                            follower.followPath(buildPaths_lowSpkEnd2Gate(),GATE_SPEED,true);
+                            follower.followPath(buildPaths_lowSpkEnd2Gate(isPathMirror),PATH_SPEED,true);
                             setPathState(PathState.GATE_OPEN_DOWN_POSE);
                         }
                     }
@@ -671,28 +676,28 @@ public class bluePedroPathing extends LinearOpMode {
 
                 case GATE_OPEN_UP_POSE:
                     if (!follower.isBusy()) {
-                        follower.followPath(buildPaths_gatePosUp2Contact(),GATE_SPEED,true);
+                        follower.followPath(buildPaths_gatePosUp2Contact(isPathMirror),GATE_SPEED,true);
                         setPathState(PathState.GATE_CONTACT_UP_POSE);
                     }
                     break;
 
                 case GATE_OPEN_DOWN_POSE:
                     if (!follower.isBusy()) {
-                        follower.followPath(buildPaths_gatePosDw2Contact(),GATE_SPEED,true);
+                        follower.followPath(buildPaths_gatePosDw2Contact(isPathMirror),GATE_SPEED,true);
                         setPathState(PathState.GATE_CONTACT_DOWN_POSE);
                     }
                     break;
 
                 case GATE_CONTACT_UP_POSE:
                     if (!follower.isBusy()) {
-                        follower.followPath(buildPaths_gateContactUp2Return(),PATH_SPEED,true);
+                        follower.followPath(buildPaths_gateContactUp2Return(isPathMirror),PATH_SPEED,true);
                         setPathState(PathState.GATE_RETURN_POSE);
                     }
                     break;
 
                 case GATE_CONTACT_DOWN_POSE:
                     if (!follower.isBusy()) {
-                        follower.followPath(buildPaths_gateContactDw2Return(),PATH_SPEED,true);
+                        follower.followPath(buildPaths_gateContactDw2Return(isPathMirror),PATH_SPEED,true);
                         setPathState(PathState.GATE_RETURN_POSE);
                     }
                     break;
@@ -702,19 +707,19 @@ public class bluePedroPathing extends LinearOpMode {
                         nextFollowerAction();
 
                         if (followerAction == FollowerAction.GO_SHOOT) {
-                            follower.followPath(buildPaths_gateReturn2Score(),PATH_SPEED,true);
+                            follower.followPath(buildPaths_gateReturn2Score(isPathMirror),PATH_SPEED,true);
                             setPathState(PathState.SCORE_POSE);
                         } else if (followerAction == FollowerAction.STOP) {
-                            follower.followPath(buildPaths_gateReturnPos2Stop(),PATH_SPEED,true);
+                            follower.followPath(buildPaths_gateReturnPos2Stop(isPathMirror),PATH_SPEED,true);
                             setPathState(PathState.STOP_POSE);
                         } else if (followerAction == FollowerAction.GRAB_HIGH_SPIKE) {
-                            follower.followPath(buildPaths_gateReturnPos2HighSpk(),PATH_SPEED,true);
+                            follower.followPath(buildPaths_gateReturnPos2HighSpk(isPathMirror),PATH_SPEED,true);
                             setPathState(PathState.HIGH_SPIKE_POSE);
                         } else if (followerAction == FollowerAction.GRAB_MID_SPIKE) {
-                            follower.followPath(buildPaths_gateReturnPos2MidSpk(),PATH_SPEED,true);
+                            follower.followPath(buildPaths_gateReturnPos2MidSpk(isPathMirror),PATH_SPEED,true);
                             setPathState(PathState.MID_SPIKE_POSE);
                         } else if (followerAction == FollowerAction.GRAB_LOW_SPIKE) {
-                            follower.followPath(buildPaths_gateReturnPos2LowSpk(),PATH_SPEED,true);
+                            follower.followPath(buildPaths_gateReturnPos2LowSpk(isPathMirror),PATH_SPEED,true);
                             setPathState(PathState.LOW_SPIKE_POSE);
                         }
                     }
