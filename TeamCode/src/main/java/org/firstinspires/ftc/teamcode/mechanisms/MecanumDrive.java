@@ -236,5 +236,5 @@ public class MecanumDrive {
     public double getLeftPowerFront() { return leftPowerFront; }
     public double getLeftPowerBack() { return leftPowerBack; }
     public double getRightPowerFront() { return rightPowerFront; }
-    public double getRightPowerBack() { return rightPowerFront; }
+    public double getRightPowerBack() { return rightPowerBack; }
 }
