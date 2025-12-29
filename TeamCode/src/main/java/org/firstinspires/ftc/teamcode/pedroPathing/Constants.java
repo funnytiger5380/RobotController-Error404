@@ -47,7 +47,7 @@ public class Constants {
             .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED) // X-pod on pinpoint device
             .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED); // Y-pod on pinpoint device
 
-    public static PathConstraints pathConstraints = new PathConstraints(0.99,100,
+    public static PathConstraints pathConstraints = new PathConstraints(0.995,100,
             1.35,1.5); // from tuning
 
     public static Follower createFollower(HardwareMap hardwareMap) {
