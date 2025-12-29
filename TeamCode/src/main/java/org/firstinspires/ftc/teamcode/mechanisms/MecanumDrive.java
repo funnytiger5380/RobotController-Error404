@@ -128,12 +128,12 @@ public class MecanumDrive {
         rightDriveBack.setDirection(driveDirection);
     }
 
-    private void setDrivesToBrake() {
+    public void setDrivesToBrake() {
         for (DcMotor motor : drives)
             motor.setZeroPowerBehavior(BRAKE);
     }
 
-    private void setDrivesToFloat() {
+    public void setDrivesToFloat() {
         for (DcMotor motor : drives)
             motor.setZeroPowerBehavior(FLOAT);
     }
