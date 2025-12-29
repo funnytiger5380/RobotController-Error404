@@ -94,12 +94,18 @@ public class PedroPathingOpMode extends LinearOpMode {
     public void runOpMode() {
         // Initialize Pedro Pathing follower
         follower = Constants.createFollower(hardwareMap);
-        followerPose = new FollowerPose()
-                .useRedPose(useRedPose)
-                .useFarStartPose(useFarStartPose)
-                .useFarStopPose(useFarStopPose)
-                .create();
+        followerPose = useRedPose ? new FollowerPose("red") : new FollowerPose("blue");
         pathBuilder = new FollowerPathBuilder(follower, followerPose);
+
+        if (useFarStartPose)
+            followerPose.useFarStartPose();
+        else
+            followerPose.useCloseStartPose();
+
+        if (useFarStopPose)
+            followerPose.useFarStopPose();
+        else
+            followerPose.useCloseStopPose();
 
         // Initialize intake motor
         intakeMotor.build(hardwareMap);
@@ -393,12 +399,6 @@ public class PedroPathingOpMode extends LinearOpMode {
             }
         }
     }
-
-    void useRedPose(boolean useRedPose) { this.useRedPose = useRedPose; }
-
-    void useFarStartPose(boolean useFarStartPose) { this.useFarStartPose = useFarStartPose; }
-
-    void useFarStopPose(boolean useFarStopPose) { this.useFarStopPose = useFarStopPose; }
 
     void getNextAction() {
         lastAction = nextAction;

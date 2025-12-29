@@ -2,6 +2,15 @@ package org.firstinspires.ftc.teamcode.mechanisms;
 
 import com.pedropathing.geometry.Pose;
 
+/**
+ * This is the Follower's pre-configured position class. This class constructs and maintains all the
+ * positions which are used in the game field. The positions are measured in game field practice
+ * before they are configured or re-programmed. The FollowerPose contains all Blue and Red team game
+ * usage position, including far and close start and stop positions. Depend on the situation, these
+ * positions can be constructed by: FollowerPose followerPose = new FollowerPose("<blue|red>"); Then
+ * calling the useFarStartPose() and useFarScorePose() methods to configure the game usage positions.
+ *
+ */
 public class FollowerPose {
     private double x_start_pose_close, y_start_pose_close, h_start_pose_close;
     private double x_score_pose_close, y_score_pose_close, h_score_pose_close;
@@ -22,89 +31,76 @@ public class FollowerPose {
     public Pose startPose, scorePose, stopPose, highSpkPose, highSpkEnd, midSpkPose, midSpkEnd,
             lowSpkPose, lowSpkEnd, gatePoseUp, gatePoseDw, gateContactUp, gateContactDw, gateReturn;
 
-    // start pose. robot is over the score line, either touching the goal wall or field boundary.
+    /** Set start position (x, y, heading): robot is over the score line, either touching the goal wall
+     * or the field boundary.
+     */
     public void setStartPose(double x, double y, double h) { startPose = new Pose(x, y, h); }
 
-    // stop pose at which the robot finishes its autonomous path.
+    /** Set stop position (x, y, heading): at which the robot finishes its autonomous path.
+     */
     public void setStopPose(double x, double y, double h) { stopPose = new Pose(x, y, h); }
 
-    // scoring pose. facing the goal wall to score the artifacts.
+    /** Set scoring position (x, y, heading): face the goal wall in preparing to score the artifacts.
+     */
     public void setScorePose(double x, double y, double h) { scorePose = new Pose(x, y, h); }
 
-    // grab pose of the highest (1st set) artifacts spike mark.
+    /** Set the start and end positions to grab the artifacts on highest spike mark.
+     */
     public void setHighSpkPose(double x, double y, double h) { highSpkPose = new Pose(x, y, h); }
     public void setHighSpkEnd(double x, double y, double h) { highSpkEnd = new Pose(x, y, h); }
 
-    // grab pose of the middle (2nd set) artifacts spike mark.
+    /** Set the start and end positions to grab the artifacts on middle spike mark.
+     */
     public void setMidSpkPose(double x, double y, double h) { midSpkPose = new Pose(x, y, h); }
     public void setMidSpkEnd(double x, double y, double h) { midSpkEnd = new Pose(x, y, h); }
 
-    // grab pose of the lowest (3rd set) artifacts spike mark.
+    /** Set the start and end positions to grab the artifacts on lowest spike mark.
+     */
     public void setLowSpkPose(double x, double y, double h) { lowSpkPose = new Pose(x, y, h); }
     public void setLowSpkEnd(double x, double y, double h) { lowSpkEnd = new Pose(x, y, h); }
 
-    // gate start and return poses to flex the gate open.
+    /** Set the gate opening standby and contact positions to flex the gate open. The Follower can
+     * face plus or minus 90 degrees in the field at the positions with respect to the audience.
+     */
     public void setGatePoseUp(double x, double y, double h) { gatePoseUp = new Pose(x, y, h); }
     public void setGatePoseDw(double x, double y, double h) { gatePoseDw = new Pose(x, y, h); }
     public void setGateContactUp(double x, double y, double h) { gateContactUp = new Pose(x, y, h); }
     public void setGateContactDw(double x, double y, double h) { gateContactDw = new Pose(x, y, h); }
+
+    /** Set the gate return position after the gate opening action is done, and before proceeding to
+     * the next position.
+     */
     public void setGateReturn(double x, double y, double h) { gateReturn = new Pose(x, y, h); }
 
-    private boolean useRedPose, useFarStartPose, useFarStopPose;
-
+    /**
+     * This is an empty constructor for the FollowerPose class so it can get started with the Blue
+     * team default positions. The proper usage is after an empty constructor call:
+     * FollowerPose followerPose = new FollowerPose(); Then using the useFarStartPose() and
+     * useFarStopPose() methods to configure the game usage positions.
+     */
     public FollowerPose() {
         this("blue");
     }
 
+    /**
+     * This is a constructor for the FollowerPose class so it can get started with the Blue or Red
+     * team default positions. The proper usage is after an empty constructor call:
+     * FollowerPose followerPose = new FollowerPose("<blue|red>"); Then using the useFarStartPose()
+     * and useFarStopPose() methods to configure the game usage positions.
+     */
     public FollowerPose(String string) {
-        if (string.equalsIgnoreCase("blue")) {
-            useRedPose = false;
-            useFarStartPose = false;
-            useFarStopPose = false;
-            create();
-        } else if (string.equalsIgnoreCase("red")) {
-            useRedPose = true;
-            useFarStartPose = false;
-            useFarStopPose = false;
-            create();
-        } else
+        if (string.equalsIgnoreCase("blue"))
+            defaultBluePose();
+        else if (string.equalsIgnoreCase("red"))
+            defaultRedPose();
+        else
             throw new IllegalArgumentException("Invalid string argument");
     }
 
-    public FollowerPose create() {
-        if (useRedPose)
-            defaultRedPose();
-        else
-            defaultBluePose();
-
-        if (useFarStartPose)
-            useFarStartPose();
-        else
-            useCloseStartPose();
-
-        if (useFarStopPose)
-            useFarStopPose();
-        else
-            useCloseStopPose();
-
-        return this;
-    }
-
-    public FollowerPose useRedPose(boolean useRedPose) {
-        this.useRedPose = useRedPose;
-        return this;
-    }
-
-    public FollowerPose useFarStartPose(boolean useFarStartPose) {
-        this.useFarStartPose = useFarStartPose;
-        return this;
-    }
-
-    public FollowerPose useFarStopPose(boolean useFarStopPose) {
-        this.useFarStopPose = useFarStopPose;
-        return this;
-    }
-
+    /** The default Blue team positions, including far and close start and stop positions.
+     * The positions are measured in game field practice, and any subsequent re-configured changes
+     * must be re-measured and tested in the game filed before becoming the defaults.
+     */
     public void defaultBluePose() {
         x_start_pose_close = 24.5;
         y_start_pose_close = 126.5;
@@ -159,9 +155,13 @@ public class FollowerPose {
         y_gate_return = 69.0;
         h_gate_return = 20.0;
 
-        setAllPose();
+        setAllPose(); // set all game usage positions ready
     }
 
+    /** The default Red team positions, including far and close start and stop positions.
+     * The positions are measured in game field practice, and any subsequent re-configured changes
+     * must be re-measured and tested in the game filed before becoming the defaults.
+     */
     public void defaultRedPose() {
         x_start_pose_close = 119.5;
         y_start_pose_close = 126.5;
@@ -216,9 +216,11 @@ public class FollowerPose {
         y_gate_return = 69.0;
         h_gate_return = 160.0;
 
-        setAllPose();
+        setAllPose(); // set all game usage positions ready
     }
 
+    /** Set all game usage positions ready by using the default x,y coordinates and heading values.
+     */
     public void setAllPose() {
         setStartPose(x_start_pose_close, y_start_pose_close, Math.toRadians(h_start_pose_close));
         setScorePose(x_score_pose_close, y_score_pose_close, Math.toRadians(h_score_pose_close));
@@ -236,26 +238,38 @@ public class FollowerPose {
         setGateReturn(x_gate_return, y_gate_return, Math.toRadians(h_gate_return));
     }
 
+    /** Set to use the far start position.
+     */
     public void useFarStartPose() {
         setStartPose(x_start_pose_far, y_start_pose_far, Math.toRadians(h_start_pose_far));
     }
 
+    /** Set to use the far scoring position.
+     */
     public void useFarScorePose() {
         setScorePose(x_score_pose_far, y_score_pose_far, Math.toRadians(h_score_pose_far));
     }
 
+    /** Set to use the far stop position.
+     */
     public void useFarStopPose() {
         setStopPose(x_stop_pose_far, y_stop_pose_far, Math.toRadians(h_stop_pose_far));
     }
 
+    /** Set to use the close start position.
+     */
     public void useCloseStartPose() {
         setStartPose(x_start_pose_close, y_start_pose_close, Math.toRadians(h_start_pose_close));
     }
 
+    /** Set to use the close scoring position.
+     */
     public void useCloseScorePose() {
         setScorePose(x_score_pose_close, y_score_pose_close, Math.toRadians(h_score_pose_close));
     }
 
+    /** Set to use the close stop position.
+     */
     public void useCloseStopPose() {
         setStopPose(x_stop_pose_close, y_stop_pose_close, Math.toRadians(h_stop_pose_close));
     }

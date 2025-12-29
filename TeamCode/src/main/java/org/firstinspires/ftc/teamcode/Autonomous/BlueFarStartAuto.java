@@ -4,7 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 @Autonomous(name = "BlueFarStartAuto", group = "Error404")
 public class BlueFarStartAuto extends PedroPathingOpMode {
-    PedroPathingOpMode myOpMode = new PedroPathingOpMode();
+    private final PedroPathingOpMode myOpMode = new PedroPathingOpMode();
 
     @Override
     public final void runOpMode() {
@@ -12,9 +12,9 @@ public class BlueFarStartAuto extends PedroPathingOpMode {
         myOpMode.gamepad2 = gamepad2;
         myOpMode.telemetry = telemetry;
         myOpMode.hardwareMap = hardwareMap;
-        myOpMode.useRedPose(false);
-        myOpMode.useFarStartPose(true);
-        myOpMode.useFarStopPose(true);
+        myOpMode.useRedPose = false;
+        myOpMode.useFarStartPose = true;
+        myOpMode.useFarStopPose  = true;
         myOpMode.runOpMode();
     }
 }
