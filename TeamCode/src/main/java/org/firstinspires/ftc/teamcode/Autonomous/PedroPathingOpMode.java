@@ -125,13 +125,13 @@ public class PedroPathingOpMode extends LinearOpMode {
         // OpMode in the Init phase, before Start button is hit
         while (opModeInInit()) {
             // select follower action sequence
-            if (gamepad1.dpadUpWasPressed())
+            if (gamepad1.dpadUpWasPressed() || gamepad2.dpadUpWasPressed())
                 followerSelectedAction.decrementSelected();
-            else if (gamepad1.dpadDownWasPressed())
+            else if (gamepad1.dpadDownWasPressed() || gamepad2.dpadDownWasPressed())
                 followerSelectedAction.incrementSelected();
-            else if (gamepad1.rightBumperWasPressed())
+            else if (gamepad1.rightBumperWasPressed() || gamepad2.rightBumperWasPressed())
                 followerSelectedAction.addSelected();
-            else if (gamepad1.leftBumperWasPressed())
+            else if (gamepad1.leftBumperWasPressed() || gamepad2.leftBumperWasPressed())
                 followerSelectedAction.removeLast();
 
             for (String line : followerSelectedAction.getSelectableLines()) {
@@ -166,8 +166,11 @@ public class PedroPathingOpMode extends LinearOpMode {
 
             // Log to telemetry for debugging
             telemetry.addData("RunTime", runTime.toString());
-            telemetry.addData("Current Pose", "x(%.1f), y(%.1f), h(%.1f)",
+            telemetry.addData("Current Pose", "x(%.4f), y(%.4f), h(%.4f)",
                     currentPose.getX(), currentPose.getY(), Math.toDegrees(currentPose.getHeading()));
+            telemetry.addData("Current Action", nextAction.toString());
+            telemetry.addLine("Follower action sequence remaining:");
+            telemetry.addLine(followerSelectedAction.getActionLines());
             telemetry.addData("PathState", pathState.toString());
             telemetry.addData("PathTimer", pathTimer.getElapsedTimeSeconds());
             telemetry.update();
@@ -393,7 +396,7 @@ public class PedroPathingOpMode extends LinearOpMode {
                 case STOP_POSE:
                     if (!follower.isBusy()) {
                         intakeMotor.setIntakeOff();
-                        follower.holdPoint(followerPose.stopPose);
+                        follower.holdPoint(currentPose);
                     }
                     break;
             }
