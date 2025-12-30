@@ -4,6 +4,7 @@ import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.FORWARD;
 import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
@@ -35,6 +36,7 @@ import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
  *  D-pad Left   = intake reverse
  */
 
+@Disabled
 @TeleOp (name = "MecanumIntakeTeleOp", group = "Error404")
 public class MecanumIntakeTeleOp extends OpMode {
     private final double DRIVE_MAX_SPEED = 0.9;
