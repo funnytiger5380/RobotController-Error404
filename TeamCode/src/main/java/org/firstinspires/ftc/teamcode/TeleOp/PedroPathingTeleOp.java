@@ -211,12 +211,15 @@ public class PedroPathingTeleOp extends OpMode {
         }
 
         // Log to telemetry for debugging
-        telemetry.addData("RunTime", runTime.toString());
+        telemetry.addData("Alliance Team", alliance.toString());
+        telemetry.addData("Use Orientation", isRobotCentric ? "Robot centric" :
+                isIMUResetRequested ? "Field Centric (Practice)" : "Field Centric");
+        telemetry.addData("RunTime", "(%.4fs)", runTime.getElapsedTimeSeconds());
         telemetry.addData("Front Motor Power", "left (%.2f), right (%.2f)", motorPower[0],motorPower[2]);
         telemetry.addData("Back Motor Power", "left (%.2f), right (%.2f)", motorPower[1], motorPower[3]);
         telemetry.addData("Launcher State", launcher.getState());
         telemetry.addData("Launcher Speed", launcher.getLauncherVelocity());
-        telemetry.addData("Sensor Timer", sensorTime.toString());
+        telemetry.addData("Sensor Timer", "(%.4fs)", sensorTime.getElapsedTimeSeconds());
         telemetry.addData("Intake State", intakeMotor.getState());
         telemetry.addData("Intake Power", intakeMotor.getPower());
         telemetry.update();
