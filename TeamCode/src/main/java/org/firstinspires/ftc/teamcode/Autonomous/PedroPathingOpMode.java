@@ -88,7 +88,7 @@ public class PedroPathingOpMode extends LinearOpMode {
     // OpMode timers
     Timer runTime = new Timer();
     Timer pathTimer = new Timer();
-    Timer auxTimer = new Timer();
+    Timer launchTimer = new Timer();
 
     @Override
     public void runOpMode() {
@@ -114,6 +114,7 @@ public class PedroPathingOpMode extends LinearOpMode {
 
         // Initialize launcher and feeders
         launcher.build(hardwareMap);
+        launcher.launcherOffAtIdle();
         launcher.setLauncherCloseVelocity(ClOSE_LAUNCH_TARGET_VELOCITY, CLOSE_LAUNCH_MIN_VELOCITY);
         launcher.setLauncherFarVelocity(FAR_LAUNCH_TARGET_VELOCITY, FAR_LAUNCH_MIN_VELOCITY);
         launcher.setLauncherCoolOffSec(LAUNCH_COOL_OFF_SECONDS);
@@ -159,13 +160,13 @@ public class PedroPathingOpMode extends LinearOpMode {
             follower.update();
             currentPose = follower.getPose(); // the follower current pose
 
-            if (runTime.getElapsedTimeSeconds() > 30) // sStop after 30 seconds
+            if (runTime.getElapsedTimeSeconds() > 30) // stop after 30 seconds
                 terminateOpModeNow();
             else
-                updatePathState(); // Follower drives through the given pathing
+                updatePathState(); // Follower drives through the built path                                                                                                  e given pathing
 
             // Log to telemetry for debugging
-            telemetry.addData("RunTime", runTime.toString());
+            telemetry.addData("RunTime", "(%.4fs)", runTime.getElapsedTimeSeconds());
             telemetry.addData("Current Pose", "x(%.4f), y(%.4f), h(%.4f)",
                     currentPose.getX(), currentPose.getY(), Math.toDegrees(currentPose.getHeading()));
             telemetry.addData("Current Action", nextAction.toString());
@@ -431,11 +432,17 @@ public class PedroPathingOpMode extends LinearOpMode {
     }
 
     void customLaunchCloseShot(int count, double interval) {
+        launcher.launcherOnAtIdle();
         for (int i = 0; i < count; i++) {
-            auxTimer.resetTimer();
-            do {} while (auxTimer.getElapsedTimeSeconds() < interval);
+            launchTimer.resetTimer();
+            do {} while (launchTimer.getElapsedTimeSeconds() < interval);
             customLaunchCloseShot();
         }
+        launcher.launcherOffAtIdle();
+        if (ballSensor.isDetected()) // additional last check
+            launcher.launchCloseShot();
+        else
+            launcher.setLauncherOff();
     }
 
     void customLaunchFarShot() {
@@ -445,10 +452,16 @@ public class PedroPathingOpMode extends LinearOpMode {
     }
 
     void customLaunchFarShot(int count, double interval) {
+        launcher.launcherOnAtIdle();
         for (int i = 0; i < count; i++) {
-            auxTimer.resetTimer();
-            do {} while (auxTimer.getElapsedTimeSeconds() < interval);
+            launchTimer.resetTimer();
+            do {} while (launchTimer.getElapsedTimeSeconds() < interval);
             customLaunchFarShot();
         }
+        launcher.launcherOffAtIdle();
+        if (ballSensor.isDetected()) // additional last check
+            launcher.launchFarShot();
+        else
+            launcher.setLauncherOff();
     }
 }

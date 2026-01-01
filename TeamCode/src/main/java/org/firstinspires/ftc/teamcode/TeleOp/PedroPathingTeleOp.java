@@ -111,6 +111,7 @@ public class PedroPathingTeleOp extends OpMode {
 
         // Initialize launcher and feeders
         launcher.build(hardwareMap);
+        launcher.launcherOffAtIdle();
         launcher.setLauncherCloseVelocity(ClOSE_LAUNCH_TARGET_VELOCITY, CLOSE_LAUNCH_MIN_VELOCITY);
         launcher.setLauncherFarVelocity(FAR_LAUNCH_TARGET_VELOCITY, FAR_LAUNCH_MIN_VELOCITY);
         launcher.setLauncherCoolOffSec(LAUNCH_COOL_OFF_SECONDS);
@@ -206,7 +207,7 @@ public class PedroPathingTeleOp extends OpMode {
             launcher.launchFarShot();
         }
         else if (isBallDetected && (sensorTime.getElapsedTimeSeconds() > LAUNCH_PANIC_TIME)) {
-            launcher.setLauncherPanic();
+            //launcher.setLauncherPanic();
             sensorTime.resetTimer();
         }
 
