@@ -39,6 +39,7 @@ public class Launcher {
     // === Launcher state machine ===
     private enum LaunchState { IDLE, PANIC, SPIN_UP_F, SPIN_UP_C, LAUNCH, LAUNCHING, COOL_OFF }
     private LaunchState launchState = LaunchState.IDLE;
+    private boolean launcherOnAtIdle = false;
     private boolean isBusy = false;
 
     private final ElapsedTime feederTimer = new ElapsedTime();
@@ -127,9 +128,17 @@ public class Launcher {
         return isBusy;
     }
 
+    public void launcherOnAtIdle() {
+        launcherOnAtIdle = true;
+    }
+
+    public void launcherOffAtIdle() {
+        launcherOnAtIdle = false;
+    }
+
     public void setLauncherOff() {
-        launch(false, false, false);
         launcher.setVelocity(0.0);
+        launchState = LaunchState.IDLE;
     }
 
     public void setLauncherPanic() {
@@ -148,8 +157,11 @@ public class Launcher {
     }
 
     public void launchCloseShot(int count) {
-        for (int i = 0; i < count; i++)
+        launcherOnAtIdle();
+        for (int i = count; i > 0; i--) {
+            if (i == 1) launcherOffAtIdle();
             launchCloseShot();
+        }
     }
 
     public void launchFarShot() {
@@ -160,8 +172,11 @@ public class Launcher {
     }
 
     public void launchFarShot(int count) {
-        for (int i = 0; i < count; i++)
+        launcherOnAtIdle();
+        for (int i = count; i > 0; i--) {
+            if (i == 1) launcherOffAtIdle();
             launchFarShot();
+        }
     }
 
     public void launch(boolean closeShotRequested, boolean farShotRequested, boolean panicRequested) {
@@ -183,7 +198,8 @@ public class Launcher {
                     launchState = LaunchState.PANIC;
                 } else {
                     isBusy = false;
-                    launcher.setVelocity(0.0);
+                    if (!launcherOnAtIdle)
+                        launcher.setVelocity(0.0);
                 }
                 break;
             case PANIC:
