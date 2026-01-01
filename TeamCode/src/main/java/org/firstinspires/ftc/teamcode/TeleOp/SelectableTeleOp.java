@@ -80,7 +80,7 @@ class RedRobotCentricTeleOp extends PedroPathingTeleOp {
  * This is the Blue alliance Field centric TeleOp OpMode.
  * The robot runs with the field centric control, which drives in the direction of a heading with
  * respect to the Pedro-pathing field coordinate system. As Blue alliance, the robot runs
- * perpendicular to Blue gate wall (0 degree) when the control pushes forward. The robot uses the
+ * perpendicular to Blue gate wall (180 degree) when the control pushes forward. The robot uses the
  * Autonomous end position to estimate its forward heading for the control when the field
  * centric TeleOp is initialized.
  */
@@ -108,7 +108,7 @@ class BlueFieldCentricTeleOp extends PedroPathingTeleOp {
  * This is the Red alliance Field centric TeleOp OpMode.
  * The robot runs with the field centric control, which drives in the direction of a heading with
  * respect to the Pedro-pathing field coordinate system. As Red alliance, the robot runs
- * perpendicular to Red gate wall (180 degree) when the control pushes forward. The robot uses the
+ * perpendicular to Red gate wall (0 degree) when the control pushes forward. The robot uses the
  * Autonomous end position to estimate its forward heading for the control when the field
  * centric TeleOp is initialized.
  */
@@ -136,7 +136,7 @@ class RedFieldCentricTeleOp extends PedroPathingTeleOp {
  * This is the Blue alliance Field centric TeleOp OpMode for the practice.
  * The robot runs with the field centric control, which drives in the direction of a heading with
  * respect to the Pedro-pathing field coordinate system. As Blue alliance, the robot runs
- * perpendicular to Blue gate wall (0 degree) when the control pushes forward. For the practice,
+ * perpendicular to Blue gate wall (180 degree) when the control pushes forward. For the practice,
  * the robot is set with its forward heading straightly away from the audience (90 degree) to begin
  * with when this TeleOp OpMode is initialized.
  */
@@ -164,7 +164,7 @@ class PracticeBlueFieldCentric extends PedroPathingTeleOp {
  * This is the Red alliance Field centric TeleOp OpMode for the practice.
  * The robot runs with the field centric control, which drives in the direction of a heading with
  * respect to the Pedro-pathing field coordinate system. As Red alliance, the robot runs
- * perpendicular to Red gate wall (180 degree) when the control pushes forward. For the practice,
+ * perpendicular to Red gate wall (0 degree) when the control pushes forward. For the practice,
  * the robot is set with its forward heading straightly away from the audience (90 degree) to begin
  * with when this TeleOp OpMode is initialized.
  */
