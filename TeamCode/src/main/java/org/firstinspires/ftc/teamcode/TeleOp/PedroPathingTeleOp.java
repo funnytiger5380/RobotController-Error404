@@ -197,15 +197,10 @@ public class PedroPathingTeleOp extends OpMode {
             sensorTime.resetTimer();
         }
 
-        if (closeShot) {
-            if (!ballSensor.isDetected())
-                intakeMotor.setIntakePanic(INTAKE_PANIC_TIME);
+        if (closeShot)
             launcher.launchCloseShot();
-        } else if (farShot) {
-            if (!ballSensor.isDetected())
-                intakeMotor.setIntakePanic(INTAKE_PANIC_TIME);
+        else if (farShot)
             launcher.launchFarShot();
-        }
         else if (isBallDetected && (sensorTime.getElapsedTimeSeconds() > LAUNCH_PANIC_TIME)) {
             //launcher.setLauncherPanic();
             sensorTime.resetTimer();
