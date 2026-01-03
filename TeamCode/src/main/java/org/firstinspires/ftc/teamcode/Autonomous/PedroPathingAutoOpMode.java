@@ -4,7 +4,7 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 
@@ -19,10 +19,10 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 import java.util.function.Function;
 
-public class PedroPathingOpMode extends LinearOpMode {
+public class PedroPathingAutoOpMode extends OpMode {
     Follower follower;
     FollowerPose followerPose;
-    Pose currentPose;
+    Pose currentPose = new Pose();
     boolean useRedPose, useFarStartPose, useFarStopPose;
 
     enum PathState {
@@ -34,7 +34,7 @@ public class PedroPathingOpMode extends LinearOpMode {
     } PathState pathState;
     FollowerPathBuilder pathBuilder;
 
-    FollowerAction lastAction, nextAction = null;
+    FollowerAction nextAction = null;
     SelectableFollowerAction followerSelectedAction = new SelectableFollowerAction(
             "<< Follower Action Sequence Selection >>", a -> {
         a.add("CLOSE_LAUNCH", FollowerAction.CLOSE_LAUNCH);
@@ -79,11 +79,14 @@ public class PedroPathingOpMode extends LinearOpMode {
     // Launcher constants
     double ClOSE_LAUNCH_TARGET_VELOCITY = 1300;
     double CLOSE_LAUNCH_MIN_VELOCITY = 1280;
+    double CLOSE_LAUNCH_INTERVAL_SECONDS = 0.25;
+
     double FAR_LAUNCH_TARGET_VELOCITY = 1600;
     double FAR_LAUNCH_MIN_VELOCITY = 1580;
+    double FAR_LAUNCH_INTERVAL_SECONDS = 0.75;
+
     double FEEDER_RUN_SECONDS = 0.10;
     double LAUNCH_COOL_OFF_SECONDS = 0.20;
-    double LAUNCH_INTERVAL_SECONDS = 0.15;
 
     // OpMode timers
     Timer runTime = new Timer();
@@ -91,7 +94,7 @@ public class PedroPathingOpMode extends LinearOpMode {
     Timer launchTimer = new Timer();
 
     @Override
-    public void runOpMode() {
+    public void init() {
         // Initialize Pedro Pathing follower
         follower = Constants.createFollower(hardwareMap);
         followerPose = useRedPose ? new FollowerPose("red") : new FollowerPose("blue");
@@ -106,6 +109,9 @@ public class PedroPathingOpMode extends LinearOpMode {
             followerPose.useFarStopPose();
         else
             followerPose.useCloseStopPose();
+
+        follower.setStartingPose(followerPose.startPose);
+        follower.update();
 
         // Initialize intake motor
         intakeMotor.build(hardwareMap);
@@ -122,60 +128,66 @@ public class PedroPathingOpMode extends LinearOpMode {
 
         // Initialize Digital sensor
         ballSensor.build(hardwareMap);
+    }
 
-        // OpMode in the Init phase, before Start button is hit
-        while (opModeInInit()) {
-            // select follower action sequence
-            if (gamepad1.dpadUpWasPressed() || gamepad2.dpadUpWasPressed())
-                followerSelectedAction.decrementSelected();
-            else if (gamepad1.dpadDownWasPressed() || gamepad2.dpadDownWasPressed())
-                followerSelectedAction.incrementSelected();
-            else if (gamepad1.rightBumperWasPressed() || gamepad2.rightBumperWasPressed())
-                followerSelectedAction.addSelected();
-            else if (gamepad1.leftBumperWasPressed() || gamepad2.leftBumperWasPressed())
-                followerSelectedAction.removeLast();
+    @Override
+    public void init_loop() {
+        // select follower action sequence
+        if (gamepad1.dpadUpWasPressed() || gamepad2.dpadUpWasPressed())
+            followerSelectedAction.decrementSelected();
+        else if (gamepad1.dpadDownWasPressed() || gamepad2.dpadDownWasPressed())
+            followerSelectedAction.incrementSelected();
+        else if (gamepad1.rightBumperWasPressed() || gamepad2.rightBumperWasPressed())
+            followerSelectedAction.addSelected();
+        else if (gamepad1.leftBumperWasPressed() || gamepad2.leftBumperWasPressed())
+            followerSelectedAction.removeLast();
 
-            for (String line : followerSelectedAction.getSelectableLines()) {
-                telemetry.addLine(line);
-            }
+        for (String line : followerSelectedAction.getSelectableLines())
+            telemetry.addLine(line);
 
-            telemetry.addLine("\nFollower action sequence:");
-            telemetry.addLine(followerSelectedAction.getActionLines());
-            telemetry.addLine("------------");
-            telemetry.addData("Start Pose", "x(%.1f), y(%.1f), h(%.1f)",
-                    followerPose.startPose.getX(), followerPose.startPose.getY(), Math.toDegrees(followerPose.startPose.getHeading()));
-            telemetry.addData("Stop Pose", "x(%.1f), y(%.1f), h(%.1f)",
-                    followerPose.stopPose.getX(), followerPose.stopPose.getY(), Math.toDegrees(followerPose.stopPose.getHeading()));
-            telemetry.update();
-        }
+        telemetry.addLine();
+        telemetry.addLine("Follower action sequence:");
+        telemetry.addLine(followerSelectedAction.getActionLines());
+        telemetry.addLine("------------");
+        telemetry.addData("OpMode", useFarStartPose ? useRedPose ? "RedFarStartAuto" : "BlueFarStartAuto"
+                : useRedPose ? "RedCloseStartAuto" : "BlueCloseStartAuto");
+        telemetry.addData("Start Pose", "x(%.1f), y(%.1f), h(%.1f)",
+                followerPose.startPose.getX(), followerPose.startPose.getY(), Math.toDegrees(followerPose.startPose.getHeading()));
+        telemetry.addData("Stop Pose", "x(%.1f), y(%.1f), h(%.1f)",
+                followerPose.stopPose.getX(), followerPose.stopPose.getY(), Math.toDegrees(followerPose.stopPose.getHeading()));
+        telemetry.update();
+    }
 
+    @Override
+    public void start() {
         runTime.resetTimer();
-        follower.setStartingPose(followerPose.startPose);
         setPathState(PathState.START_POSE);
         getNextAction();
+    }
 
-        // OpMode in the active Running phase
-        while (opModeIsActive()) {
-            // Update follower pathing on every iteration
-            follower.update();
-            currentPose = follower.getPose(); // the follower current pose
+    @Override
+    public void loop() {
+        if (runTime.getElapsedTimeSeconds() > 30) // stop after 30 seconds
+            terminateOpModeNow();
+        else
+            updatePathState(); // Follower drives through the built path                                                                                                  e given pathing
 
-            if (runTime.getElapsedTimeSeconds() > 30) // stop after 30 seconds
-                terminateOpModeNow();
-            else
-                updatePathState(); // Follower drives through the built path                                                                                                  e given pathing
+        // Update follower pathing on every iteration
+        follower.update();
+        currentPose = follower.getPose(); // the follower current pose
 
-            // Log to telemetry for debugging
-            telemetry.addData("RunTime", "(%.4fs)", runTime.getElapsedTimeSeconds());
-            telemetry.addData("Current Pose", "x(%.4f), y(%.4f), h(%.4f)",
-                    currentPose.getX(), currentPose.getY(), Math.toDegrees(currentPose.getHeading()));
-            telemetry.addData("Current Action", nextAction.toString());
-            telemetry.addLine("Follower action sequence remaining:");
-            telemetry.addLine(followerSelectedAction.getActionLines());
-            telemetry.addData("PathState", pathState.toString());
-            telemetry.addData("PathTimer", pathTimer.getElapsedTimeSeconds());
-            telemetry.update();
-        }
+        // Log to telemetry for debugging
+        telemetry.addData("OpMode", useFarStartPose ? useRedPose ? "RedFarStartAuto" : "BlueFarStartAuto"
+                : useRedPose ? "RedCloseStartAuto" : "BlueCloseStartAuto");
+        telemetry.addData("RunTime", "(%.4fs)", runTime.getElapsedTimeSeconds());
+        telemetry.addData("Current Pose", "x(%.4f), y(%.4f), h(%.4f)",
+                currentPose.getX(), currentPose.getY(), Math.toDegrees(currentPose.getHeading()));
+        telemetry.addData("Current Action", isNextAction(null) ? "None": nextAction.toString());
+        telemetry.addLine("Follower action sequence remaining:");
+        telemetry.addLine(followerSelectedAction.getActionLines());
+        telemetry.addData("PathState", pathState.toString());
+        telemetry.addData("PathTimer", pathTimer.getElapsedTimeSeconds());
+        telemetry.update();
     }
 
     void setPathState(PathState newPathState) {
@@ -221,10 +233,10 @@ public class PedroPathingOpMode extends LinearOpMode {
 
                 case SCORE_POSE:
                     if (!follower.isBusy()) { // wait till follower path update is done
-                        if (isLastAction(FollowerAction.CLOSE_LAUNCH))
-                            customLaunchCloseShot(3, LAUNCH_INTERVAL_SECONDS);  // intake panic + close shot
-                        else if (isLastAction(FollowerAction.FAR_LAUNCH))
-                            customLaunchFarShot(3, LAUNCH_INTERVAL_SECONDS); // intake panic + far shot
+                        if (isNextAction(FollowerAction.CLOSE_LAUNCH))
+                            customLaunchCloseShot(3, CLOSE_LAUNCH_INTERVAL_SECONDS);
+                        else if (isNextAction(FollowerAction.FAR_LAUNCH))
+                            customLaunchFarShot(3, FAR_LAUNCH_INTERVAL_SECONDS);
 
                         intakeMotor.setIntakeOff();
                         getNextAction(); // get the next follower action
@@ -405,7 +417,6 @@ public class PedroPathingOpMode extends LinearOpMode {
     }
 
     void getNextAction() {
-        lastAction = nextAction;
         nextAction = followerSelectedAction.getNextAction();
     }
 
@@ -413,11 +424,8 @@ public class PedroPathingOpMode extends LinearOpMode {
         return nextAction == action;
     }
 
-    boolean isLastAction(FollowerAction action) {
-        return lastAction == action;
-    }
-
-    void followingPath(FollowerPathBuilder pb, Function<FollowerPathBuilder, PathChain> buildPath, double pathSpeed) {
+    void followingPath(FollowerPathBuilder pb, Function<FollowerPathBuilder, PathChain> buildPath,
+                       double pathSpeed) {
         follower.followPath(buildPath.apply(pb), pathSpeed, true);
     }
 

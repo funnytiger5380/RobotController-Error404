@@ -40,6 +40,7 @@ public class MecanumDrive {
     private double leftPowerBack;
     private double rightPowerBack;
 
+    private double maxAngleSpeed = 1.0;
     private double maxPower = 1.0;
     private double maxSpeed = 1.0;
 
@@ -171,10 +172,10 @@ public class MecanumDrive {
     }
 
     public void runDrive(double forward, double strafe, double rotate) {
-        leftPowerFront  = forward + strafe + rotate;
-        rightPowerFront = forward - strafe - rotate;
-        leftPowerBack   = forward - strafe + rotate;
-        rightPowerBack  = forward + strafe - rotate;
+        leftPowerFront  = forward + strafe + maxAngleSpeed * rotate;
+        rightPowerFront = forward - strafe - maxAngleSpeed * rotate;
+        leftPowerBack   = forward - strafe + maxAngleSpeed * rotate;
+        rightPowerBack  = forward + strafe - maxAngleSpeed * rotate;
 
         double drivePowerMax = Math.max(Math.abs(leftPowerFront), Math.max(Math.abs(rightPowerFront),
                 Math.max(Math.abs(leftPowerBack), Math.abs(rightPowerBack))));
@@ -228,8 +229,10 @@ public class MecanumDrive {
         imu.resetYaw();
     }
 
+    public void setMaxAngleSpeed(double maxAngleSpeed) { this.maxAngleSpeed = maxAngleSpeed; }
     public void setMaxPower(double maxPower) { this.maxPower = maxPower; }
     public void setMaxSpeed(double maxSpeed) { this.maxSpeed = maxSpeed; }
+    public double getMaxAngleSpeed() { return this.maxAngleSpeed; }
     public double getMaxPower() { return this.maxPower; }
     public double getMaxSpeed() { return this.maxSpeed; }
 

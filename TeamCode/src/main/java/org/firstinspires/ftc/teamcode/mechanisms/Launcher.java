@@ -157,8 +157,14 @@ public class Launcher {
     }
 
     public void launchCloseShot(int count) {
+        launchCloseShot(count, 0.0);
+    }
+
+    public void launchCloseShot(int count, double interval) {
         launcherOnAtIdle();
         for (int i = count; i > 0; i--) {
+            launchTimer.reset();
+            do {} while (launchTimer.seconds() < interval);
             if (i == 1) launcherOffAtIdle();
             launchCloseShot();
         }
@@ -172,8 +178,14 @@ public class Launcher {
     }
 
     public void launchFarShot(int count) {
+        launchFarShot(count, 0.0);
+    }
+
+    public void launchFarShot(int count, double interval) {
         launcherOnAtIdle();
         for (int i = count; i > 0; i--) {
+            launchTimer.reset();
+            do {} while (launchTimer.seconds() < interval);
             if (i == 1) launcherOffAtIdle();
             launchFarShot();
         }

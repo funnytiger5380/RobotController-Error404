@@ -68,7 +68,7 @@ public class PedroPathingTeleOp extends OpMode {
     boolean isBallDetected = false;
 
     // Drivetrain constants
-    double DRIVE_MAX_SPEED = 0.9;
+    double DRIVE_MAX_POWER = 1.0;
 
     // Intake motor constants
     double INTAKE_POWER = 0.75;
@@ -99,7 +99,7 @@ public class PedroPathingTeleOp extends OpMode {
 
         // Initialize Mecanum drivetrain
         mecanum = (Mecanum) follower.getDrivetrain();
-        mecanum.setMaxPowerScaling(DRIVE_MAX_SPEED);
+        mecanum.setMaxPowerScaling(DRIVE_MAX_POWER);
 
         motors = mecanum.getMotors();
         motorPower = new double[motors.size()];
