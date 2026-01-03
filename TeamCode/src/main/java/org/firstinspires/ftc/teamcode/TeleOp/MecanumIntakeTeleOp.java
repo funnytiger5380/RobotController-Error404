@@ -36,15 +36,15 @@ import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
  *  D-pad Left   = intake reverse
  */
 
-@Disabled
 @TeleOp (name = "MecanumIntakeTeleOp", group = "Error404")
 public class MecanumIntakeTeleOp extends OpMode {
-    private final double DRIVE_MAX_SPEED = 0.9;
+    private final double DRIVE_MAX_SPEED = 1.0;
+    private final double DRIVE_MAX_ANGLE_SPEED = 0.7;
     private final double INTAKE_POWER = 0.75;
     private final double INTAKE_PANIC_TIME = 0.1;
 
     private final double ClOSE_LAUNCH_TARGET_VELOCITY = 1300;
-    private final double CLOSE_LAUNCH_MIN_VELOCITY    = 1275;
+    private final double CLOSE_LAUNCH_MIN_VELOCITY    = 1280;
     private final double FAR_LAUNCH_TARGET_VELOCITY   = 1600;
     private final double FAR_LAUNCH_MIN_VELOCITY      = 1580;
 
@@ -97,6 +97,7 @@ public class MecanumIntakeTeleOp extends OpMode {
         /* === Drivetrain setup === */
         mecanumDrive.build(hardwareMap);
         mecanumDrive.setMaxSpeed(DRIVE_MAX_SPEED);
+        mecanumDrive.setMaxAngleSpeed(DRIVE_MAX_ANGLE_SPEED);
 
         /* === IMU setup === */
         mecanumDrive.initRevIMU(hardwareMap,
@@ -140,11 +141,12 @@ public class MecanumIntakeTeleOp extends OpMode {
             driveHeadingOffset = 0.0;
         }
 
-        telemetry.addData("Status", "Initialized\n");
         telemetry.addData("Alliance", "Press Square/Circle button to select Blue/Red team\n");
         telemetry.addData("Use RevIMU", "Press Triangle/Cross button to choose Field/Robot Orientation\n");
-        telemetry.addData("IMURequested", isIMURequested ? "YES" : "NO");
-        telemetry.addData("Alliance", alliance.toString());
+        telemetry.addLine();
+        telemetry.addLine("------------");
+        telemetry.addData("Alliance Team", alliance.toString());
+        telemetry.addData("Use Orientation", isIMURequested ? "Field centric" : "Robot centric");
         telemetry.addData("Robot Heading Offset", driveHeadingOffset);
         telemetry.update();
     }
@@ -189,20 +191,15 @@ public class MecanumIntakeTeleOp extends OpMode {
         boolean closeShot = gamepad1.right_bumper;
         boolean farShot   = (gamepad1.right_trigger > 0.5);
 
-        if (closeShot) {
-            if (!ballSensor.isDetected())
-                intakeMotor.setIntakePanic(INTAKE_PANIC_TIME);
+        if (closeShot)
             launcher.launchCloseShot();
-        } else if (farShot) {
-            if (!ballSensor.isDetected())
-                intakeMotor.setIntakePanic(INTAKE_PANIC_TIME);
+        else if (farShot)
             launcher.launchFarShot();
-        }
 
         // === Status Output ===
-        telemetry.addData("Alliance", alliance.toString());
-        telemetry.addData("IMURequested", isIMURequested ? "YES\n" : "NO\n");
-        telemetry.addData("Status", "Run Time: " + runtime.toString());
+        telemetry.addData("Alliance Team", alliance.toString());
+        telemetry.addData("Use Orientation", isIMURequested ? "Field centric" : "Robot centric");
+        telemetry.addData("Run Time", runtime.toString());
         telemetry.addData("Front Motor Power", "left (%.2f), right (%.2f)", mecanumDrive.getLeftPowerFront(), mecanumDrive.getRightPowerFront());
         telemetry.addData("Back Motor Power", "left (%.2f), right (%.2f)", mecanumDrive.getLeftPowerBack(), mecanumDrive.getRightPowerBack());
         telemetry.addData("Launcher State", launcher.getState());
