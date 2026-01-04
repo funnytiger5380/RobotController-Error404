@@ -241,12 +241,60 @@ public class FollowerPathBuilder {
     }
 
     /**
+     * Returns: PathChain from the Follower's middle spark mark end position back to the start
+     * position before proceeding to the scoring position.
+     */
+    public PathChain buildPaths_midSpkEnd2Return() {
+        return follower.pathBuilder()
+                .addPath(new BezierLine(followerPose.midSpkEnd, followerPose.midSpkReturn))
+                .setLinearHeadingInterpolation(followerPose.midSpkEnd.getHeading(),
+                        followerPose.midSpkReturn.getHeading())
+                .build();
+    }
+
+    /**
+     * Returns: PathChain from the Follower's middle spark mark return position back to the score
+     * position.
+     */
+    public PathChain buildPaths_midSpkReturn2Score() {
+        return follower.pathBuilder()
+                .addPath(new BezierLine(followerPose.midSpkReturn, followerPose.scorePose))
+                .setLinearHeadingInterpolation(followerPose.midSpkReturn.getHeading(),
+                        followerPose.scorePose.getHeading())
+                .build();
+    }
+
+    /**
      * Returns: PathChain from the Follower's lowest spark mark end position to the scoring position.
      */
     public PathChain buildPaths_lowSpkEnd2Score() {
         return follower.pathBuilder()
                 .addPath(new BezierLine(followerPose.lowSpkEnd, followerPose.scorePose))
                 .setLinearHeadingInterpolation(followerPose.lowSpkEnd.getHeading(),
+                        followerPose.scorePose.getHeading())
+                .build();
+    }
+
+    /**
+     * Returns: PathChain from the Follower's lowest spark mark end position back to the start
+     * position before proceeding to the scoring position.
+     */
+    public PathChain buildPaths_lowSpkEnd2Return() {
+        return follower.pathBuilder()
+                .addPath(new BezierLine(followerPose.lowSpkEnd, followerPose.lowSpkReturn))
+                .setLinearHeadingInterpolation(followerPose.lowSpkEnd.getHeading(),
+                        followerPose.lowSpkReturn.getHeading())
+                .build();
+    }
+
+    /**
+     * Returns: PathChain from the Follower's lowest spark mark return position back to the score
+     * position.
+     */
+    public PathChain buildPaths_lowSpkReturn2Score() {
+        return follower.pathBuilder()
+                .addPath(new BezierLine(followerPose.lowSpkReturn, followerPose.scorePose))
+                .setLinearHeadingInterpolation(followerPose.lowSpkReturn.getHeading(),
                         followerPose.scorePose.getHeading())
                 .build();
     }

@@ -24,12 +24,15 @@ public class FollowerPose {
     private double x_mid_spike_line_end, y_mid_spike_line_end, h_mid_spike_line_end;
     private double x_low_spike_line_start, y_low_spike_line_start, h_low_spike_line_start;
     private double x_low_spike_line_end, y_low_spike_line_end, h_low_spike_line_end;
+    private double x_mid_spike_line_return, y_mid_spike_line_return, h_mid_spike_line_return;
+    private double x_low_spike_line_return, y_low_spike_line_return, h_low_spike_line_return;
     private double x_gate_pose, y_gate_pose, h_gate_pose_up, h_gate_pose_dw;
     private double x_gate_contact, y_gate_contact, h_gate_contact_up, h_gate_contact_dw;
     private double x_gate_return, y_gate_return, h_gate_return;
 
-    public Pose startPose, scorePose, stopPose, highSpkPose, highSpkEnd, midSpkPose, midSpkEnd,
-            lowSpkPose, lowSpkEnd, gatePoseUp, gatePoseDw, gateContactUp, gateContactDw, gateReturn;
+    public Pose startPose, scorePose, stopPose, highSpkPose, highSpkEnd,
+            midSpkPose, midSpkEnd, midSpkReturn, lowSpkPose, lowSpkEnd, lowSpkReturn,
+            gatePoseUp, gatePoseDw, gateContactUp, gateContactDw, gateReturn;
 
     /** Set start position (x, y, heading): robot is over the score line, either touching the goal wall
      * or the field boundary.
@@ -49,15 +52,17 @@ public class FollowerPose {
     public void setHighSpkPose(double x, double y, double h) { highSpkPose = new Pose(x, y, h); }
     public void setHighSpkEnd(double x, double y, double h) { highSpkEnd = new Pose(x, y, h); }
 
-    /** Set the start and end positions to grab the artifacts on middle spike mark.
+    /** Set the start, end and return positions to grab the artifacts on middle spike mark.
      */
     public void setMidSpkPose(double x, double y, double h) { midSpkPose = new Pose(x, y, h); }
     public void setMidSpkEnd(double x, double y, double h) { midSpkEnd = new Pose(x, y, h); }
+    public void setMidSpkReturn(double x, double y, double h) { midSpkReturn = new Pose(x, y, h); }
 
-    /** Set the start and end positions to grab the artifacts on lowest spike mark.
+    /** Set the start, end and return positions to grab the artifacts on lowest spike mark.
      */
     public void setLowSpkPose(double x, double y, double h) { lowSpkPose = new Pose(x, y, h); }
     public void setLowSpkEnd(double x, double y, double h) { lowSpkEnd = new Pose(x, y, h); }
+    public void setLowSpkReturn(double x, double y, double h) { lowSpkReturn = new Pose(x, y, h); }
 
     /** Set the gate opening standby and contact positions to flex the gate open. The Follower can
      * face plus or minus 90 degrees in the field at the positions with respect to the audience.
@@ -107,7 +112,7 @@ public class FollowerPose {
         h_start_pose_close = 144.0;
         x_score_pose_close = 55.0;
         y_score_pose_close = 91.0;
-        h_score_pose_close = 140.0;
+        h_score_pose_close = 142.0;
         x_stop_pose_close = 55.0;
         y_stop_pose_close = 69.0;
         h_stop_pose_close = 90.0;
@@ -116,7 +121,7 @@ public class FollowerPose {
         y_start_pose_far = 9.0;
         h_start_pose_far = 90.0;
         x_score_pose_far = 56.0;
-        y_score_pose_far = 12.0;
+        y_score_pose_far = 14.0;
         h_score_pose_far = 115.0;
         x_stop_pose_far = 56.0;
         y_stop_pose_far = 33.0;
@@ -125,29 +130,35 @@ public class FollowerPose {
         x_high_spike_line_start = 44.0;
         y_high_spike_line_start = 84.0;
         h_high_spike_line_start = 180.0;
-        x_high_spike_line_end = 17.5;
-        y_high_spike_line_end = 84.0;
-        h_high_spike_line_end = 180.0;
+        x_high_spike_line_end = 19.0;
+        y_high_spike_line_end = y_high_spike_line_start;
+        h_high_spike_line_end = h_high_spike_line_start;
 
         x_mid_spike_line_start = 44.0;
         y_mid_spike_line_start = 60.0;
         h_mid_spike_line_start = 180.0;
-        x_mid_spike_line_end = 16.5;
-        y_mid_spike_line_end = 60.0;
-        h_mid_spike_line_end = 180.0;
+        x_mid_spike_line_end = 19.0;
+        y_mid_spike_line_end = y_mid_spike_line_start;
+        h_mid_spike_line_end = h_mid_spike_line_start;
+        x_mid_spike_line_return = x_mid_spike_line_start;
+        y_mid_spike_line_return = y_mid_spike_line_start;
+        h_mid_spike_line_return = h_mid_spike_line_start - 20.0;
 
         x_low_spike_line_start = 44.0;
-        y_low_spike_line_start = 36.0;
+        y_low_spike_line_start = 36.5;  //36.0
         h_low_spike_line_start = 180.0;
-        x_low_spike_line_end = 16.5;
-        y_low_spike_line_end = 36.0;
-        h_low_spike_line_end = 180.0;
+        x_low_spike_line_end = 19.0;
+        y_low_spike_line_end = y_low_spike_line_start;
+        h_low_spike_line_end = h_low_spike_line_start;
+        x_low_spike_line_return = x_low_spike_line_start;
+        y_low_spike_line_return = y_low_spike_line_start;
+        h_low_spike_line_return = h_low_spike_line_start - 20.0;
 
-        x_gate_pose = 17.5;
+        x_gate_pose = 19.0;
         y_gate_pose = 69.0;
         h_gate_pose_up = 90.0;
         h_gate_pose_dw = -90.0;
-        x_gate_contact = 14;
+        x_gate_contact = 16.0;
         y_gate_contact = 69.0;
         h_gate_contact_up = 90.0;
         h_gate_contact_dw = -90.0;
@@ -168,7 +179,7 @@ public class FollowerPose {
         h_start_pose_close = 36.0;
         x_score_pose_close = 89.0;
         y_score_pose_close = 91.0;
-        h_score_pose_close = 40.0;
+        h_score_pose_close = 42.0; //38.0;
         x_stop_pose_close = 89.0;
         y_stop_pose_close = 69.0;
         h_stop_pose_close = 90.0;
@@ -177,38 +188,44 @@ public class FollowerPose {
         y_start_pose_far = 9.0;
         h_start_pose_far = 90.0;
         x_score_pose_far = 88.0;
-        y_score_pose_far = 12.0;
-        h_score_pose_far = 65.0;
+        y_score_pose_far = 14.0;
+        h_score_pose_far = 69.0; //65.0
         x_stop_pose_far = 88.0;
         y_stop_pose_far = 33.0;
         h_stop_pose_far = 90.0;
 
-        x_high_spike_line_start = 100.0;
-        y_high_spike_line_start = 84.0;
+        x_high_spike_line_start = 99.0; //100.0
+        y_high_spike_line_start = 83.5; //84.0
         h_high_spike_line_start = 0.0;
-        x_high_spike_line_end = 126.5;
-        y_high_spike_line_end = 84.0;
-        h_high_spike_line_end = 0.0;
+        x_high_spike_line_end = 125.0;
+        y_high_spike_line_end = y_high_spike_line_start;
+        h_high_spike_line_end = h_high_spike_line_start;
 
-        x_mid_spike_line_start = 100.0;
+        x_mid_spike_line_start = 99.0;  //100.0
         y_mid_spike_line_start = 60.0;
         h_mid_spike_line_start = 0.0;
-        x_mid_spike_line_end = 127.5;
-        y_mid_spike_line_end = 60.0;
-        h_mid_spike_line_end = 0.0;
+        x_mid_spike_line_end = 125.0;
+        y_mid_spike_line_end = y_mid_spike_line_start;
+        h_mid_spike_line_end = h_mid_spike_line_start;
+        x_mid_spike_line_return = x_mid_spike_line_start;
+        y_mid_spike_line_return = y_mid_spike_line_start;
+        h_mid_spike_line_return = h_mid_spike_line_start + 20.0;
 
-        x_low_spike_line_start = 100.0;
+        x_low_spike_line_start = 99.0;  //100.0
         y_low_spike_line_start = 36.0;
         h_low_spike_line_start = 0.0;
-        x_low_spike_line_end = 127.5;
-        y_low_spike_line_end = 36.0;
-        h_low_spike_line_end = 0.0;
+        x_low_spike_line_end = 125.0;
+        y_low_spike_line_end = y_low_spike_line_start;
+        h_low_spike_line_end = h_low_spike_line_start;
+        x_low_spike_line_return = x_low_spike_line_start;
+        y_low_spike_line_return = y_low_spike_line_start;
+        h_low_spike_line_return = h_low_spike_line_start + 20.0;
 
-        x_gate_pose = 126.5;
+        x_gate_pose = 125.0;
         y_gate_pose = 69.0;
         h_gate_pose_up = 90.0;
         h_gate_pose_dw = -90.0;
-        x_gate_contact = 130;
+        x_gate_contact = 128.0;
         y_gate_contact = 69.0;
         h_gate_contact_up = 90.0;
         h_gate_contact_dw = -90.0;
@@ -231,6 +248,8 @@ public class FollowerPose {
         setHighSpkEnd(x_high_spike_line_end, y_high_spike_line_end, Math.toRadians(h_high_spike_line_end));
         setMidSpkEnd(x_mid_spike_line_end, y_mid_spike_line_end, Math.toRadians(h_mid_spike_line_end));
         setLowSpkEnd(x_low_spike_line_end, y_low_spike_line_end, Math.toRadians(h_low_spike_line_end));
+        setMidSpkReturn(x_mid_spike_line_return, y_mid_spike_line_return, Math.toRadians(h_mid_spike_line_return));
+        setLowSpkReturn(x_low_spike_line_return, y_low_spike_line_return, Math.toRadians(h_low_spike_line_return));
         setGatePoseUp(x_gate_pose, y_gate_pose, Math.toRadians(h_gate_pose_up));
         setGatePoseDw(x_gate_pose, y_gate_pose, Math.toRadians(h_gate_pose_dw));
         setGateContactUp(x_gate_contact, y_gate_contact, Math.toRadians(h_gate_contact_up));
