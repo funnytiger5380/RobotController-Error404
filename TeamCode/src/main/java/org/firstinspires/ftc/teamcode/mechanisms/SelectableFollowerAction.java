@@ -81,6 +81,6 @@ public class SelectableFollowerAction {
      * the followerAction sequence.
      */
     public FollowerAction getNextAction() {
-        return followerActionList.poll();
+        return followerActionList.pollFirst();
     }
 }
