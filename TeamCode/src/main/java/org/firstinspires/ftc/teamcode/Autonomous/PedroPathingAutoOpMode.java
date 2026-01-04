@@ -26,16 +26,18 @@ public class PedroPathingAutoOpMode extends OpMode {
     boolean useRedPose, useFarStartPose, useFarStopPose;
 
     enum PathState {
-        START_POSE, SCORE_POSE, HIGH_SPIKE_POSE, GRAB_HIGH_SPIKE,
+        START_POSE, SCORE_POSE, STOP_POSE,
+        HIGH_SPIKE_POSE, GRAB_HIGH_SPIKE, HIGH_SPIKE_RETURN_POSE,
         MID_SPIKE_POSE, GRAB_MID_SPIKE, MID_SPIKE_RETURN_POSE,
         LOW_SPIKE_POSE, GRAB_LOW_SPIKE, LOW_SPIKE_RETURN_POSE,
         GATE_OPEN_UP_POSE, GATE_CONTACT_UP_POSE,
         GATE_OPEN_DOWN_POSE, GATE_CONTACT_DOWN_POSE,
-        GATE_RETURN_POSE, STOP_POSE
+        GATE_RETURN_POSE
     } PathState pathState;
     FollowerPathBuilder pathBuilder;
     boolean isHighSpikeGrabbed = false;
     boolean isMidSpikeGrabbed = false;
+    boolean isLowSpikeGrabbed = false;
 
     FollowerAction nextAction = null;
     SelectableFollowerAction followerSelectedAction = new SelectableFollowerAction(
@@ -298,8 +300,13 @@ public class PedroPathingAutoOpMode extends OpMode {
                             setPathState(PathState.SCORE_POSE);
                         } else if (isNextAction(FollowerAction.FAR_LAUNCH)) {
                             followerPose.useFarScorePose();
-                            followingPath(pathBuilder, FollowerPathBuilder::buildPaths_highSpkEnd2Score);
-                            setPathState(PathState.SCORE_POSE);
+                            if (isMidSpikeGrabbed) {
+                                followingPath(pathBuilder, FollowerPathBuilder::buildPaths_highSpkEnd2Score);
+                                setPathState(PathState.SCORE_POSE);
+                            } else {
+                                followingPath(pathBuilder, FollowerPathBuilder::buildPaths_highSpkEnd2Return);
+                                setPathState(PathState.HIGH_SPIKE_RETURN_POSE);
+                            }
                         } else if (isNextAction(FollowerAction.STOP)) {
                             followingPath(pathBuilder, FollowerPathBuilder::buildPaths_highSpkEnd2Stop);
                             setPathState(PathState.STOP_POSE);
@@ -307,6 +314,13 @@ public class PedroPathingAutoOpMode extends OpMode {
                             followingPath(pathBuilder, FollowerPathBuilder::buildPaths_highSpkEnd2Gate);
                             setPathState(PathState.GATE_OPEN_UP_POSE);
                         }
+                    }
+                    break;
+
+                case HIGH_SPIKE_RETURN_POSE:
+                    if (!follower.isBusy()) {
+                        followingPath(pathBuilder, FollowerPathBuilder::buildPaths_highSpkReturn2Score);
+                        setPathState(PathState.SCORE_POSE);
                     }
                     break;
 
@@ -326,8 +340,13 @@ public class PedroPathingAutoOpMode extends OpMode {
                             }
                         } else if (isNextAction(FollowerAction.FAR_LAUNCH)) {
                             followerPose.useFarScorePose();
-                            followingPath(pathBuilder, FollowerPathBuilder::buildPaths_midSpkEnd2Score);
-                            setPathState(PathState.SCORE_POSE);
+                            if (isLowSpikeGrabbed) {
+                                followingPath(pathBuilder, FollowerPathBuilder::buildPaths_midSpkEnd2Score);
+                                setPathState(PathState.SCORE_POSE);
+                            } else {
+                                followingPath(pathBuilder, FollowerPathBuilder::buildPaths_midSpkEnd2Return);
+                                setPathState(PathState.MID_SPIKE_RETURN_POSE);
+                            }
                         } else if (isNextAction(FollowerAction.STOP)) {
                             followingPath(pathBuilder, FollowerPathBuilder::buildPaths_midSpkEnd2Stop);
                             setPathState(PathState.STOP_POSE);
@@ -347,6 +366,7 @@ public class PedroPathingAutoOpMode extends OpMode {
 
                 case GRAB_LOW_SPIKE:
                     if (!follower.isBusy()) {
+                        isLowSpikeGrabbed = true;
                         getNextAction(); // get the next follower action
 
                         if (isNextAction(FollowerAction.CLOSE_LAUNCH)) {

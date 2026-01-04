@@ -230,6 +230,30 @@ public class FollowerPathBuilder {
     }
 
     /**
+     * Returns: PathChain from the Follower's highest spark mark end position back to the start
+     * position before proceeding to the scoring position.
+     */
+    public PathChain buildPaths_highSpkEnd2Return() {
+        return follower.pathBuilder()
+                .addPath(new BezierLine(followerPose.highSpkEnd, followerPose.highSpkReturn))
+                .setLinearHeadingInterpolation(followerPose.highSpkEnd.getHeading(),
+                        followerPose.highSpkReturn.getHeading())
+                .build();
+    }
+
+    /**
+     * Returns: PathChain from the Follower's highest spark mark return position back to the score
+     * position.
+     */
+    public PathChain buildPaths_highSpkReturn2Score() {
+        return follower.pathBuilder()
+                .addPath(new BezierLine(followerPose.highSpkReturn, followerPose.scorePose))
+                .setLinearHeadingInterpolation(followerPose.highSpkReturn.getHeading(),
+                        followerPose.scorePose.getHeading())
+                .build();
+    }
+
+    /**
      * Returns: PathChain from the Follower's middle spark mark end position to the scoring position.
      */
     public PathChain buildPaths_midSpkEnd2Score() {

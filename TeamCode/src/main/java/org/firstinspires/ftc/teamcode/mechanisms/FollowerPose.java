@@ -20,17 +20,18 @@ public class FollowerPose {
     private double x_stop_pose_far, y_stop_pose_far, h_stop_pose_far;
     private double x_high_spike_line_start, y_high_spike_line_start, h_high_spike_line_start;
     private double x_high_spike_line_end, y_high_spike_line_end, h_high_spike_line_end;
+    private double x_high_spike_line_return, y_high_spike_line_return, h_high_spike_line_return;
     private double x_mid_spike_line_start, y_mid_spike_line_start, h_mid_spike_line_start;
     private double x_mid_spike_line_end, y_mid_spike_line_end, h_mid_spike_line_end;
+    private double x_mid_spike_line_return, y_mid_spike_line_return, h_mid_spike_line_return;
     private double x_low_spike_line_start, y_low_spike_line_start, h_low_spike_line_start;
     private double x_low_spike_line_end, y_low_spike_line_end, h_low_spike_line_end;
-    private double x_mid_spike_line_return, y_mid_spike_line_return, h_mid_spike_line_return;
     private double x_low_spike_line_return, y_low_spike_line_return, h_low_spike_line_return;
     private double x_gate_pose, y_gate_pose, h_gate_pose_up, h_gate_pose_dw;
     private double x_gate_contact, y_gate_contact, h_gate_contact_up, h_gate_contact_dw;
     private double x_gate_return, y_gate_return, h_gate_return;
 
-    public Pose startPose, scorePose, stopPose, highSpkPose, highSpkEnd,
+    public Pose startPose, scorePose, stopPose, highSpkPose, highSpkEnd, highSpkReturn,
             midSpkPose, midSpkEnd, midSpkReturn, lowSpkPose, lowSpkEnd, lowSpkReturn,
             gatePoseUp, gatePoseDw, gateContactUp, gateContactDw, gateReturn;
 
@@ -39,18 +40,19 @@ public class FollowerPose {
      */
     public void setStartPose(double x, double y, double h) { startPose = new Pose(x, y, h); }
 
-    /** Set stop position (x, y, heading): at which the robot finishes its autonomous path.
-     */
-    public void setStopPose(double x, double y, double h) { stopPose = new Pose(x, y, h); }
-
     /** Set scoring position (x, y, heading): face the goal wall in preparing to score the artifacts.
      */
     public void setScorePose(double x, double y, double h) { scorePose = new Pose(x, y, h); }
 
-    /** Set the start and end positions to grab the artifacts on highest spike mark.
+    /** Set stop position (x, y, heading): at which the robot finishes its autonomous path.
+     */
+    public void setStopPose(double x, double y, double h) { stopPose = new Pose(x, y, h); }
+
+    /** Set the start, end and return positions to grab the artifacts on highest spike mark.
      */
     public void setHighSpkPose(double x, double y, double h) { highSpkPose = new Pose(x, y, h); }
     public void setHighSpkEnd(double x, double y, double h) { highSpkEnd = new Pose(x, y, h); }
+    public void setHighSpkReturn(double x, double y, double h) { highSpkReturn = new Pose(x, y, h); }
 
     /** Set the start, end and return positions to grab the artifacts on middle spike mark.
      */
@@ -133,6 +135,9 @@ public class FollowerPose {
         x_high_spike_line_end = 19.0;
         y_high_spike_line_end = y_high_spike_line_start;
         h_high_spike_line_end = h_high_spike_line_start;
+        x_high_spike_line_return = x_high_spike_line_start;
+        y_high_spike_line_return = y_high_spike_line_start;
+        h_high_spike_line_return = h_high_spike_line_start - 20.0;
 
         x_mid_spike_line_start = 44.0;
         y_mid_spike_line_start = 60.0;
@@ -200,6 +205,10 @@ public class FollowerPose {
         x_high_spike_line_end = 125.0;
         y_high_spike_line_end = y_high_spike_line_start;
         h_high_spike_line_end = h_high_spike_line_start;
+        x_high_spike_line_return = x_high_spike_line_start;
+        y_high_spike_line_return = y_high_spike_line_start;
+        h_high_spike_line_return = h_high_spike_line_start + 20.0;
+
 
         x_mid_spike_line_start = 99.0;  //100.0
         y_mid_spike_line_start = 60.0;
@@ -242,14 +251,19 @@ public class FollowerPose {
         setStartPose(x_start_pose_close, y_start_pose_close, Math.toRadians(h_start_pose_close));
         setScorePose(x_score_pose_close, y_score_pose_close, Math.toRadians(h_score_pose_close));
         setStopPose(x_stop_pose_close, y_stop_pose_close, Math.toRadians(h_stop_pose_close));
+
         setHighSpkPose(x_high_spike_line_start, y_high_spike_line_start, Math.toRadians(h_high_spike_line_start));
-        setMidSpkPose(x_mid_spike_line_start, y_mid_spike_line_start, Math.toRadians(h_mid_spike_line_start));
-        setLowSpkPose(x_low_spike_line_start, y_low_spike_line_start, Math.toRadians(h_low_spike_line_start));
         setHighSpkEnd(x_high_spike_line_end, y_high_spike_line_end, Math.toRadians(h_high_spike_line_end));
+        setHighSpkReturn(x_high_spike_line_return, y_high_spike_line_return, Math.toRadians(h_high_spike_line_return));
+
+        setMidSpkPose(x_mid_spike_line_start, y_mid_spike_line_start, Math.toRadians(h_mid_spike_line_start));
         setMidSpkEnd(x_mid_spike_line_end, y_mid_spike_line_end, Math.toRadians(h_mid_spike_line_end));
-        setLowSpkEnd(x_low_spike_line_end, y_low_spike_line_end, Math.toRadians(h_low_spike_line_end));
         setMidSpkReturn(x_mid_spike_line_return, y_mid_spike_line_return, Math.toRadians(h_mid_spike_line_return));
+
+        setLowSpkPose(x_low_spike_line_start, y_low_spike_line_start, Math.toRadians(h_low_spike_line_start));
+        setLowSpkEnd(x_low_spike_line_end, y_low_spike_line_end, Math.toRadians(h_low_spike_line_end));
         setLowSpkReturn(x_low_spike_line_return, y_low_spike_line_return, Math.toRadians(h_low_spike_line_return));
+
         setGatePoseUp(x_gate_pose, y_gate_pose, Math.toRadians(h_gate_pose_up));
         setGatePoseDw(x_gate_pose, y_gate_pose, Math.toRadians(h_gate_pose_dw));
         setGateContactUp(x_gate_contact, y_gate_contact, Math.toRadians(h_gate_contact_up));
