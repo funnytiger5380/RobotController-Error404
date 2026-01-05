@@ -132,17 +132,21 @@ public class IntakeMotor {
     }
 
     public void setIntakePanic(double panicTime) {
+        double holdTime = this.panicTime;
+
         setPanicTime(panicTime);
         setIntakePanic();
         while (isPanic())
             setIntakeOn();
-        setPanicTime(this.panicTime);
+        setPanicTime(holdTime);
     }
 
-    public void setIntakePanic(double panicTime, double setPower) {
-        setPanicTime(panicTime);
-        setPower(setPower);
-        setIntakePanic();
+    public void setIntakePanic(double panicTime, double power) {
+        double holdPower = this.motorPower;
+
+        setPower(power);
+        setIntakePanic(panicTime);
+        setPower(holdPower);
     }
 
     public void run(boolean intakeOn, boolean intakeOff, boolean panic) {
