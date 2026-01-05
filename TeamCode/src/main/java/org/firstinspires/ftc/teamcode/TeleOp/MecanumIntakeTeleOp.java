@@ -4,7 +4,6 @@ import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.FORWARD;
 import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
@@ -40,8 +39,11 @@ import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
 public class MecanumIntakeTeleOp extends OpMode {
     private final double DRIVE_MAX_SPEED = 1.0;
     private final double DRIVE_MAX_ANGLE_SPEED = 0.7;
+
     private final double INTAKE_POWER = 0.75;
-    private final double INTAKE_PANIC_TIME = 0.1;
+    private final double INTAKE_PANIC_TIME = 0.10;
+    private final double INTAKE_PANIC_INTERVAL = 0.10;
+    private final boolean INTAKE_PANIC_ENABLE = true;
 
     private final double ClOSE_LAUNCH_TARGET_VELOCITY = 1300;
     private final double CLOSE_LAUNCH_MIN_VELOCITY    = 1280;
@@ -85,7 +87,8 @@ public class MecanumIntakeTeleOp extends OpMode {
             .sensorMode(DigitalChannel.Mode.INPUT);
 
     // === Run timer & Misc. ===
-    private final ElapsedTime runtime = new ElapsedTime();
+    private final ElapsedTime sensorTime = new ElapsedTime();
+    private final ElapsedTime runTime = new ElapsedTime();
     private enum Alliance { BLUE, RED, NONE }
     private Alliance alliance = Alliance.NONE;
     private boolean isAlmostEndGame = false;
@@ -158,7 +161,8 @@ public class MecanumIntakeTeleOp extends OpMode {
 
         mecanumDrive.setDriveAngularOffset(driveHeadingOffset);
         mecanumDrive.restartDrives();
-        runtime.reset();
+        runTime.reset();
+        sensorTime.reset();
     }
 
     @Override
@@ -168,9 +172,11 @@ public class MecanumIntakeTeleOp extends OpMode {
         double strafe  = gamepad1.left_stick_x;
         double rotate  = gamepad1.right_stick_x;
 
-        if (runtime.seconds() > 120.0) {
+        if (runTime.seconds() > 120.0) {
+            intakeMotor.setIntakeOff();
+            launcher.setLauncherOff();
             terminateOpModeNow();
-        } else if (runtime.seconds() > 110.0 && !isAlmostEndGame) {
+        } else if (runTime.seconds() > 110.0 && !isAlmostEndGame) {
             gamepad1.rumbleBlips(3);
             isAlmostEndGame = true;
         }
@@ -195,11 +201,16 @@ public class MecanumIntakeTeleOp extends OpMode {
             launcher.launchCloseShot();
         else if (farShot)
             launcher.launchFarShot();
+        else if (intakeMotor.isBusy() && INTAKE_PANIC_ENABLE &&
+                (sensorTime.seconds() > INTAKE_PANIC_INTERVAL)) {
+            launcher.setLauncherPanic();
+            sensorTime.reset();
+        }
 
         // === Status Output ===
         telemetry.addData("Alliance Team", alliance.toString());
         telemetry.addData("Use Orientation", isIMURequested ? "Field centric" : "Robot centric");
-        telemetry.addData("Run Time", runtime.toString());
+        telemetry.addData("Run Time", runTime.toString());
         telemetry.addData("Front Motor Power", "left (%.2f), right (%.2f)", mecanumDrive.getLeftPowerFront(), mecanumDrive.getRightPowerFront());
         telemetry.addData("Back Motor Power", "left (%.2f), right (%.2f)", mecanumDrive.getLeftPowerBack(), mecanumDrive.getRightPowerBack());
         telemetry.addData("Launcher State", launcher.getState());
