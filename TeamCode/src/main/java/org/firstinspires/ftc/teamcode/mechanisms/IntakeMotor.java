@@ -29,8 +29,8 @@ public class IntakeMotor {
     private final ElapsedTime timer = new ElapsedTime();
     private double panicTime = 0.10;
 
-    private boolean isBusy = false;
-    private boolean isPanic = false;
+    private volatile boolean isBusy = false;
+    private volatile boolean isPanic = false;
 
     public void build(HardwareMap hardwareMap) {
         intakeMotor = hardwareMap.get(DcMotor.class, motorName);
@@ -136,8 +136,6 @@ public class IntakeMotor {
 
         setPanicTime(panicTime);
         setIntakePanic();
-        while (isPanic())
-            setIntakeOn();
         setPanicTime(holdTime);
     }
 
@@ -150,56 +148,51 @@ public class IntakeMotor {
     }
 
     public void run(boolean intakeOn, boolean intakeOff, boolean panic) {
-        double tmpPower;
-
-        if (intakeOff) {
-            isBusy = false;
-            isPanic = false;
-            intakeState = IntakeState.OFF;
-            intakeMotor.setPower(0.0);
-        } else {
-            switch (intakeState) {
-                case OFF:
-                    if (intakeOn) {
-                        isBusy = true;
-                        intakeState = IntakeState.ON;
-                        intakeDirection = IntakeDirection.FORWARD;
-                        intakeMotor.setPower(motorPower);
-                    } else if (panic) {
-                        isBusy = true;
-                        isPanic = true;
-                        timer.reset();
-                        intakeState = IntakeState.PANIC;
-                        intakeDirection = IntakeDirection.REVERSE;
-                        intakeMotor.setPower(-1 * motorPower);
-                    }
-                    break;
-                case ON:
-                    if (panic) {
-                        isPanic = true;
-                        timer.reset();
-                        intakeState = IntakeState.PANIC;
-                        intakeDirection = IntakeDirection.REVERSE;
-                        intakeMotor.setPower(-1 * motorPower);
-                    } else if (intakeOn) {
-                        tmpPower = Math.abs(intakeMotor.getPower()) + 0.05;
-                        if (tmpPower <= maxPower)
-                            intakeMotor.setPower(tmpPower);
-                    } else {
-                        intakeMotor.setPower(motorPower);
-                    }
-                    break;
-                case PANIC:
-                    if (panic)
-                        timer.reset();
-                    else if (timer.seconds() >= panicTime) {
-                        isPanic = false;
-                        intakeState = IntakeState.ON;
-                        intakeDirection = IntakeDirection.FORWARD;
-                        intakeMotor.setPower(motorPower);
-                    }
-                    break;
-            }
+        switch (intakeState) {
+            case OFF:
+                if (intakeOn) {
+                    isBusy = true;
+                    isPanic = false;
+                    intakeState = IntakeState.ON;
+                    intakeDirection = IntakeDirection.FORWARD;
+                    intakeMotor.setPower(motorPower);
+                } else if (panic) {
+                    isBusy = true;
+                    isPanic = true;
+                    timer.reset();
+                    intakeState = IntakeState.PANIC;
+                    intakeDirection = IntakeDirection.REVERSE;
+                    intakeMotor.setPower(-1 * motorPower);
+                }
+                break;
+            case ON:
+                if (intakeOff) {
+                    isBusy = false;
+                    intakeState = IntakeState.OFF;
+                    intakeMotor.setPower(0.0);
+                } else if (panic) {
+                    isPanic = true;
+                    timer.reset();
+                    intakeState = IntakeState.PANIC;
+                    intakeDirection = IntakeDirection.REVERSE;
+                    intakeMotor.setPower(-1 * motorPower);
+                }
+                break;
+            case PANIC:
+                if (intakeOff) {
+                    isBusy = false;
+                    isPanic = false;
+                    intakeState = IntakeState.OFF;
+                    intakeMotor.setPower(0.0);
+                } else if (panic && intakeOn) {
+                    timer.reset();
+                } else if (timer.seconds() > panicTime) {
+                    isPanic = false;
+                    intakeState = IntakeState.ON;
+                    intakeDirection = IntakeDirection.FORWARD;
+                    intakeMotor.setPower(motorPower);
+                }
+                break;
         }
     }
 }

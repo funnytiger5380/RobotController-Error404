@@ -17,14 +17,17 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class Launcher {
     private CRServo leftFeeder;
     private CRServo rightFeeder;
-    private DcMotorEx launcher;
-
     private String leftFeederName = "leftFeeder";
     private String rightFeederName = "rightFeeder";
-    private String launcherName = "launcher";
 
     DcMotorSimple.Direction leftFeederDirection = FORWARD;
+    DcMotorSimple.Direction leftFeederDirectionInv = REVERSE;
+
     DcMotorSimple.Direction rightFeederDirection = REVERSE;
+    DcMotorSimple.Direction rightFeederDirectionInv = FORWARD;
+
+    private DcMotorEx launcher;
+    private String launcherName = "launcher";
     DcMotorSimple.Direction launcherDirection = FORWARD;
     DcMotor.ZeroPowerBehavior laucherZeroPowerBehavior = BRAKE;
 
@@ -40,7 +43,8 @@ public class Launcher {
     private enum LaunchState { IDLE, PANIC, SPIN_UP_F, SPIN_UP_C, LAUNCH, LAUNCHING, COOL_OFF }
     private LaunchState launchState = LaunchState.IDLE;
     private boolean launcherOnAtIdle = false;
-    private boolean isBusy = false;
+    private volatile boolean isBusy = false;
+    private volatile boolean isPanic = false;
 
     private final ElapsedTime feederTimer = new ElapsedTime();
     private final ElapsedTime launchTimer = new ElapsedTime();
@@ -90,11 +94,13 @@ public class Launcher {
 
     public Launcher leftFeederDirection(DcMotorSimple.Direction motorDirection) {
         leftFeederDirection = motorDirection;
+        leftFeederDirectionInv = leftFeederDirection.inverted();
         return this;
     }
 
     public Launcher rightFeederDirection(DcMotorSimple.Direction motorDirection) {
         rightFeederDirection = motorDirection;
+        rightFeederDirectionInv = rightFeederDirection.inverted();
         return this;
     }
 
@@ -108,12 +114,14 @@ public class Launcher {
 
     public void setLeftFeederDirection(DcMotorSimple.Direction motorDirection) {
         leftFeederDirection = motorDirection;
-        leftFeeder.setDirection(motorDirection);
+        leftFeederDirectionInv = leftFeederDirection.inverted();
+        leftFeeder.setDirection(leftFeederDirection);
     }
 
     public void setRightFeederDirection(DcMotorSimple.Direction motorDirection) {
         rightFeederDirection = motorDirection;
-        rightFeeder.setDirection(motorDirection);
+        rightFeederDirectionInv = rightFeederDirection.inverted();
+        rightFeeder.setDirection(rightFeederDirection);
     }
 
     public DcMotorSimple.Direction getLeftFeederDirection() {
@@ -128,6 +136,10 @@ public class Launcher {
         return isBusy;
     }
 
+    public boolean isPanic() {
+        return isPanic;
+    }
+
     public void launcherOnAtIdle() {
         launcherOnAtIdle = true;
     }
@@ -138,22 +150,18 @@ public class Launcher {
 
     public void setLauncherOff() {
         launcher.setVelocity(0.0);
+        leftFeeder.setPower(0.0);
+        rightFeeder.setPower(0.0);
+        leftFeeder.setDirection(leftFeederDirection);
+        rightFeeder.setDirection(rightFeederDirection);
         launchState = LaunchState.IDLE;
     }
 
-    public void setLauncherPanic() {
-        if (!isBusy()) {
-            launch(false, false, true);
-            while (isBusy())
-                launch(false, false, false);
-        }
-    }
-
     public void launchCloseShot() {
-        while (!isBusy())
-            launch(true, false, false);
-        while (isBusy())
-            launch(false, false, false);
+        // wait until last busy is done so it guarantees a single shot after launch
+        do { launch(true, false, false); } while (isBusy);
+        // wait until current shot is done to return the function call
+        do { launch(false, false, false); } while (isBusy);
     }
 
     public void launchCloseShot(int count) {
@@ -161,20 +169,20 @@ public class Launcher {
     }
 
     public void launchCloseShot(int count, double interval) {
-        launcherOnAtIdle();
+        launcherOnAtIdle(); // set to keep launcher fly wheel on between multiple shots
         for (int i = count; i > 0; i--) {
             launchTimer.reset();
             do {} while (launchTimer.seconds() < interval);
-            if (i == 1) launcherOffAtIdle();
+            if (i == 1) launcherOffAtIdle(); // set to launcher fly wheel off after the last shoot
             launchCloseShot();
         }
     }
 
     public void launchFarShot() {
-        while (!isBusy())
-            launch(false, true, false);
-        while (isBusy())
-            launch(false, false, false);
+        // wait until last busy is done so it guarantees a single shot after launch
+        do { launch(false, true, false); } while (isBusy);
+        // wait until current shot is done to return the function call
+        do { launch(false, false, false); } while (isBusy);
     }
 
     public void launchFarShot(int count) {
@@ -182,28 +190,29 @@ public class Launcher {
     }
 
     public void launchFarShot(int count, double interval) {
-        launcherOnAtIdle();
+        launcherOnAtIdle(); // set to keep launcher fly wheel on between multiple shots
         for (int i = count; i > 0; i--) {
             launchTimer.reset();
             do {} while (launchTimer.seconds() < interval);
-            if (i == 1) launcherOffAtIdle();
+            if (i == 1) launcherOffAtIdle(); // set to launcher fly wheel off after the last shoot
             launchFarShot();
         }
     }
 
-    public void launch(boolean closeShotRequested, boolean farShotRequested, boolean panicRequested) {
+    public void launch(boolean closeShot, boolean farShot, boolean panic) {
         switch (launchState) {
             case IDLE:
-                if (closeShotRequested) {
-                    isBusy = true;
-                    launchState = LaunchState.SPIN_UP_C;
-                } else if (farShotRequested) {
+                if (farShot) {
                     isBusy = true;
                     launchState = LaunchState.SPIN_UP_F;
-                } else if (panicRequested) {
+                } else if (closeShot) {
                     isBusy = true;
-                    setLeftFeederDirection(leftFeederDirection.inverted());
-                    setRightFeederDirection(rightFeederDirection.inverted());
+                    launchState = LaunchState.SPIN_UP_C;
+                } else if (panic) {
+                    isBusy = true;
+                    isPanic = true;
+                    leftFeeder.setDirection(leftFeederDirectionInv);
+                    rightFeeder.setDirection(rightFeederDirectionInv);
                     leftFeeder.setPower(1.0);
                     rightFeeder.setPower(1.0);
                     feederTimer.reset();
@@ -215,22 +224,39 @@ public class Launcher {
                 }
                 break;
             case PANIC:
-                if (feederTimer.seconds() > feederRunSec) {
+                if (farShot) {
+                    isPanic = false;
                     leftFeeder.setPower(0.0);
                     rightFeeder.setPower(0.0);
-                    setLeftFeederDirection(leftFeederDirection.inverted());
-                    setRightFeederDirection(rightFeederDirection.inverted());
+                    leftFeeder.setDirection(leftFeederDirection);
+                    rightFeeder.setDirection(rightFeederDirection);
+                    launchState = LaunchState.SPIN_UP_F;
+                }
+                else if (closeShot) {
+                    isPanic = false;
+                    leftFeeder.setPower(0.0);
+                    rightFeeder.setPower(0.0);
+                    leftFeeder.setDirection(leftFeederDirection);
+                    rightFeeder.setDirection(rightFeederDirection);
+                    launchState = LaunchState.SPIN_UP_C;
+                }
+                else if (feederTimer.seconds() > feederRunSec) {
+                    isPanic = false;
+                    leftFeeder.setPower(0.0);
+                    rightFeeder.setPower(0.0);
+                    leftFeeder.setDirection(leftFeederDirection);
+                    rightFeeder.setDirection(rightFeederDirection);
                     launchState = LaunchState.IDLE;
                 }
-                break;
-            case SPIN_UP_C:
-                launcher.setVelocity(closeTargetVelocity);
-                if (launcher.getVelocity() > closeMinVelocity)
-                    launchState = LaunchState.LAUNCH;
                 break;
             case SPIN_UP_F:
                 launcher.setVelocity(farTargetVelocity);
                 if (launcher.getVelocity() > farMinVelocity)
+                    launchState = LaunchState.LAUNCH;
+                break;
+            case SPIN_UP_C:
+                launcher.setVelocity(closeTargetVelocity);
+                if (launcher.getVelocity() > closeMinVelocity)
                     launchState = LaunchState.LAUNCH;
                 break;
             case LAUNCH:

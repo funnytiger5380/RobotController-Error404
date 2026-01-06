@@ -172,24 +172,19 @@ public class MecanumDrive {
     }
 
     public void runDrive(double forward, double strafe, double rotate) {
-        leftPowerFront  = forward + strafe + maxAngleSpeed * rotate;
-        rightPowerFront = forward - strafe - maxAngleSpeed * rotate;
-        leftPowerBack   = forward - strafe + maxAngleSpeed * rotate;
-        rightPowerBack  = forward + strafe - maxAngleSpeed * rotate;
+        leftPowerFront  = forward + strafe + rotate;
+        rightPowerFront = forward - strafe - rotate;
+        leftPowerBack   = forward - strafe + rotate;
+        rightPowerBack  = forward + strafe - rotate;
 
         double drivePowerMax = Math.max(Math.abs(leftPowerFront), Math.max(Math.abs(rightPowerFront),
                 Math.max(Math.abs(leftPowerBack), Math.abs(rightPowerBack))));
 
         if (drivePowerMax > maxPower) {
-            leftPowerFront  = maxSpeed * (leftPowerFront / drivePowerMax) * maxPower;
-            rightPowerFront = maxSpeed * (rightPowerFront / drivePowerMax) * maxPower;
-            leftPowerBack   = maxSpeed * (leftPowerBack / drivePowerMax) * maxPower;
-            rightPowerBack  = maxSpeed * (rightPowerBack / drivePowerMax) * maxPower;
-        } else {
-            leftPowerFront  = maxSpeed * leftPowerFront;
-            rightPowerFront = maxSpeed * rightPowerFront;
-            leftPowerBack   = maxSpeed * leftPowerBack;
-            rightPowerBack  = maxSpeed * rightPowerBack;
+            leftPowerFront  = maxPower * (leftPowerFront / drivePowerMax);
+            rightPowerFront = maxPower * (rightPowerFront / drivePowerMax);
+            leftPowerBack   = maxPower * (leftPowerBack / drivePowerMax);
+            rightPowerBack  = maxPower * (rightPowerBack / drivePowerMax);
         }
 
         leftDriveFront.setPower(leftPowerFront);
@@ -229,15 +224,27 @@ public class MecanumDrive {
         imu.resetYaw();
     }
 
-    public void setMaxAngleSpeed(double maxAngleSpeed) { this.maxAngleSpeed = maxAngleSpeed; }
-    public void setMaxPower(double maxPower) { this.maxPower = maxPower; }
-    public void setMaxSpeed(double maxSpeed) { this.maxSpeed = maxSpeed; }
-    public double getMaxAngleSpeed() { return this.maxAngleSpeed; }
-    public double getMaxPower() { return this.maxPower; }
-    public double getMaxSpeed() { return this.maxSpeed; }
+    public void setMaxPower(double maxPower) {
+        this.maxPower = maxPower;
+    }
 
-    public double getLeftPowerFront() { return leftPowerFront; }
-    public double getLeftPowerBack() { return leftPowerBack; }
-    public double getRightPowerFront() { return rightPowerFront; }
-    public double getRightPowerBack() { return rightPowerBack; }
+    public double getMaxPower() {
+        return this.maxPower;
+    }
+
+    public double getLeftPowerFront() {
+        return leftPowerFront;
+    }
+
+    public double getLeftPowerBack() {
+        return leftPowerBack;
+    }
+
+    public double getRightPowerFront() {
+        return rightPowerFront;
+    }
+
+    public double getRightPowerBack() {
+        return rightPowerBack;
+    }
 }
