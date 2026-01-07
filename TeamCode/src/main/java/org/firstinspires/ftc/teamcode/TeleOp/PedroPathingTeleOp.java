@@ -65,22 +65,24 @@ public class PedroPathingTeleOp extends OpMode {
             .sensorName("ball_sensor")
             .sensorMode(DigitalChannel.Mode.INPUT);
     Timer sensorTime = new Timer();
-    boolean isBallDetected = false;
 
     // Drivetrain constants
     double DRIVE_MAX_POWER = 1.0;
+    double DRIVE_MAX_FORWARD_SPEED = 1.0;
+    double DRIVE_MAX_ANGULAR_SPEED = 0.7;
 
     // Intake motor constants
     double INTAKE_POWER = 0.75;
-    double INTAKE_PANIC_TIME = 0.15;
-    double LAUNCH_PANIC_TIME = 10.0;
+    double INTAKE_PANIC_TIME = 0.10;
 
     // Launcher constants
     double ClOSE_LAUNCH_TARGET_VELOCITY = 1300;
     double CLOSE_LAUNCH_MIN_VELOCITY    = 1280;
     double FAR_LAUNCH_TARGET_VELOCITY   = 1600;
     double FAR_LAUNCH_MIN_VELOCITY      = 1580;
-    double FEEDER_RUN_SECONDS      = 0.10;
+
+    double FEEDER_RUN_SECONDS = 0.10;
+    double FEEDER_PANIC_INTERVAL = 0.10  + FEEDER_RUN_SECONDS;
     double LAUNCH_COOL_OFF_SECONDS = 0.20;
 
     // OpMode timer
@@ -161,15 +163,15 @@ public class PedroPathingTeleOp extends OpMode {
     public void loop() {
         if (runTime.getElapsedTimeSeconds() > 120)
             terminateOpModeNow();
-        else if (runTime.getElapsedTimeSeconds() > 110 && !isAlmostEndGame) {
-            gamepad1.rumbleBlips(3); // gamepad rumble
+        else if (runTime.getElapsedTimeSeconds() > 112 && !isAlmostEndGame) {
+            gamepad1.rumbleBlips(2); // gamepad rumble
             isAlmostEndGame = true;
         }
 
         // === Drive Control ===
-        double forward = -gamepad1.left_stick_y;
-        double strafe  = -gamepad1.left_stick_x;
-        double rotate  = -gamepad1.right_stick_x;
+        double forward = -gamepad1.left_stick_y * DRIVE_MAX_FORWARD_SPEED;
+        double strafe  = -gamepad1.left_stick_x * DRIVE_MAX_FORWARD_SPEED;
+        double rotate  = -gamepad1.right_stick_x * DRIVE_MAX_ANGULAR_SPEED;
 
         follower.setTeleOpDrive(forward, strafe, rotate, isRobotCentric, driveHeadingOffset);
         follower.update();
@@ -179,32 +181,21 @@ public class PedroPathingTeleOp extends OpMode {
         }
 
         // === Intake Motor ===
-        boolean intakeOn  = gamepad1.left_bumper;
-        boolean intakeOff = (gamepad1.left_trigger > 0.5);
-        boolean panic     = gamepad1.dpad_left;
+        boolean intakeOn    = gamepad1.left_bumper;
+        boolean intakeOff   = gamepad1.left_trigger > 0.5;
+        boolean intakePanic = gamepad1.dpad_left;
 
-        intakeMotor.run(intakeOn, intakeOff, panic);
+        intakeMotor.run(intakeOn, intakeOff, intakePanic);
 
         // === Launcher ===
-        boolean closeShot = gamepad1.right_bumper;
-        boolean farShot   = (gamepad1.right_trigger > 0.5);
+        boolean closeShot   = gamepad1.right_bumper;
+        boolean farShot     = gamepad1.right_trigger > 0.5;
+        boolean launchPanic = intakeMotor.isBusy() && ballSensor.isDetected() &&
+                                 (sensorTime.getElapsedTimeSeconds() > FEEDER_PANIC_INTERVAL);
 
-        // === Sensor timer ===
-        if (ballSensor.isDetected()) {
-            isBallDetected = true;
-        } else {
-            isBallDetected = false;
+        if (launchPanic)
             sensorTime.resetTimer();
-        }
-
-        if (closeShot)
-            launcher.launchCloseShot();
-        else if (farShot)
-            launcher.launchFarShot();
-        else if (isBallDetected && (sensorTime.getElapsedTimeSeconds() > LAUNCH_PANIC_TIME)) {
-            //launcher.setLauncherPanic();
-            sensorTime.resetTimer();
-        }
+        launcher.launch(closeShot, farShot, launchPanic);
 
         // Log to telemetry for debugging
         telemetry.addData("Alliance Team", alliance.toString());

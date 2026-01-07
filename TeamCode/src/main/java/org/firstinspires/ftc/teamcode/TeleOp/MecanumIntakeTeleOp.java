@@ -4,7 +4,6 @@ import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.FORWARD;
 import static com.qualcomm.robotcore.hardware.DcMotorSimple.Direction.REVERSE;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
@@ -38,10 +37,12 @@ import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
 
 @TeleOp (name = "MecanumIntakeTeleOp", group = "Error404")
 public class MecanumIntakeTeleOp extends OpMode {
-    private final double DRIVE_MAX_SPEED = 1.0;
-    private final double DRIVE_MAX_ANGLE_SPEED = 0.7;
+    private final double DRIVE_MAX_POWER = 1.0;
+    private final double DRIVE_MAX_FORWARD_SPEED = 1.0;
+    private final double DRIVE_MAX_ANGULAR_SPEED = 0.7;
+
     private final double INTAKE_POWER = 0.75;
-    private final double INTAKE_PANIC_TIME = 0.1;
+    private final double INTAKE_PANIC_TIME = 0.10;
 
     private final double ClOSE_LAUNCH_TARGET_VELOCITY = 1300;
     private final double CLOSE_LAUNCH_MIN_VELOCITY    = 1280;
@@ -49,6 +50,7 @@ public class MecanumIntakeTeleOp extends OpMode {
     private final double FAR_LAUNCH_MIN_VELOCITY      = 1580;
 
     private final double FEEDER_RUN_SECONDS = 0.10;
+    private final double FEEDER_PANIC_INTERVAL = 0.10 + FEEDER_RUN_SECONDS;
     private final double LAUNCH_COOLOFF_SECONDS = 0.20;
 
     // === Drivetrain motors ===
@@ -79,13 +81,14 @@ public class MecanumIntakeTeleOp extends OpMode {
             .leftFeederDirection(FORWARD)
             .rightFeederDirection(REVERSE);
 
-    // === Digital sensor ===
+    // === Ball sensor ===
     private final DigitalSensor ballSensor = new DigitalSensor()
             .sensorName("ball_sensor")
             .sensorMode(DigitalChannel.Mode.INPUT);
+    private final ElapsedTime sensorTime = new ElapsedTime();
 
     // === Run timer & Misc. ===
-    private final ElapsedTime runtime = new ElapsedTime();
+    private final ElapsedTime runTime = new ElapsedTime();
     private enum Alliance { BLUE, RED, NONE }
     private Alliance alliance = Alliance.NONE;
     private boolean isAlmostEndGame = false;
@@ -96,8 +99,7 @@ public class MecanumIntakeTeleOp extends OpMode {
     public void init() {
         /* === Drivetrain setup === */
         mecanumDrive.build(hardwareMap);
-        mecanumDrive.setMaxSpeed(DRIVE_MAX_SPEED);
-        mecanumDrive.setMaxAngleSpeed(DRIVE_MAX_ANGLE_SPEED);
+        mecanumDrive.setMaxPower(DRIVE_MAX_POWER);
 
         /* === IMU setup === */
         mecanumDrive.initRevIMU(hardwareMap,
@@ -158,20 +160,23 @@ public class MecanumIntakeTeleOp extends OpMode {
 
         mecanumDrive.setDriveAngularOffset(driveHeadingOffset);
         mecanumDrive.restartDrives();
-        runtime.reset();
+        runTime.reset();
+        sensorTime.reset();
     }
 
     @Override
     public void loop() {
         // === Drive Control ===
-        double forward = -gamepad1.left_stick_y;
-        double strafe  = gamepad1.left_stick_x;
-        double rotate  = gamepad1.right_stick_x;
+        double forward = -gamepad1.left_stick_y * DRIVE_MAX_FORWARD_SPEED;
+        double strafe  = gamepad1.left_stick_x  * DRIVE_MAX_FORWARD_SPEED;
+        double rotate  = gamepad1.right_stick_x * DRIVE_MAX_ANGULAR_SPEED;
 
-        if (runtime.seconds() > 120.0) {
+        if (runTime.seconds() > 120.0) {
+            intakeMotor.setIntakeOff();
+            launcher.setLauncherOff();
             terminateOpModeNow();
-        } else if (runtime.seconds() > 110.0 && !isAlmostEndGame) {
-            gamepad1.rumbleBlips(3);
+        } else if (runTime.seconds() > 112.0 && !isAlmostEndGame) {
+            gamepad1.rumbleBlips(2);
             isAlmostEndGame = true;
         }
 
@@ -181,25 +186,25 @@ public class MecanumIntakeTeleOp extends OpMode {
             mecanumDrive.runDriveFieldRelative(forward, strafe, rotate);
 
         // === Intake Motor ===
-        boolean intakeOn  = gamepad1.left_bumper;
-        boolean intakeOff = (gamepad1.left_trigger > 0.5);
-        boolean panic     = gamepad1.dpad_left;
+        boolean intakeOn    = gamepad1.left_bumper;
+        boolean intakeOff   = gamepad1.left_trigger > 0.5;
+        boolean intakePanic = gamepad1.dpad_left;
 
-        intakeMotor.run(intakeOn, intakeOff, panic);
+        intakeMotor.run(intakeOn, intakeOff, intakePanic);
 
         // === Launcher ===
-        boolean closeShot = gamepad1.right_bumper;
-        boolean farShot   = (gamepad1.right_trigger > 0.5);
+        boolean closeShot   = gamepad1.right_bumper;
+        boolean farShot     = gamepad1.right_trigger > 0.5;
+        boolean launchPanic = intakeMotor.isBusy() && (sensorTime.seconds() > FEEDER_PANIC_INTERVAL);
 
-        if (closeShot)
-            launcher.launchCloseShot();
-        else if (farShot)
-            launcher.launchFarShot();
+        if (launchPanic)
+            sensorTime.reset();
+        launcher.launch(closeShot, farShot, launchPanic);
 
         // === Status Output ===
         telemetry.addData("Alliance Team", alliance.toString());
         telemetry.addData("Use Orientation", isIMURequested ? "Field centric" : "Robot centric");
-        telemetry.addData("Run Time", runtime.toString());
+        telemetry.addData("Run Time", runTime.toString());
         telemetry.addData("Front Motor Power", "left (%.2f), right (%.2f)", mecanumDrive.getLeftPowerFront(), mecanumDrive.getRightPowerFront());
         telemetry.addData("Back Motor Power", "left (%.2f), right (%.2f)", mecanumDrive.getLeftPowerBack(), mecanumDrive.getRightPowerBack());
         telemetry.addData("Launcher State", launcher.getState());

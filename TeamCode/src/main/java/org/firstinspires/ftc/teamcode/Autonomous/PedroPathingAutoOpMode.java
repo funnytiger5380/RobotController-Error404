@@ -23,6 +23,8 @@ public class PedroPathingAutoOpMode extends OpMode {
     Follower follower;
     FollowerPose followerPose;
     Pose currentPose = new Pose();
+
+    // Configurable OpMode parameters
     boolean useRedPose, useFarStartPose, useFarStopPose;
 
     enum PathState {
@@ -39,6 +41,7 @@ public class PedroPathingAutoOpMode extends OpMode {
     boolean isMidSpikeGrabbed = false;
     boolean isLowSpikeGrabbed = false;
 
+    // Select the follower action sequence
     FollowerAction nextAction = null;
     SelectableFollowerAction followerSelectedAction = new SelectableFollowerAction(
             "<< Follower Action Sequence Selection >>", a -> {
@@ -73,30 +76,34 @@ public class PedroPathingAutoOpMode extends OpMode {
             .sensorMode(DigitalChannel.Mode.INPUT);
 
     // Drivetrain constants
-    double PATH_SPEED = 0.75;
+    double PATH_SPEED_NORMAL = 0.75;
+    double PATH_SPEED_SLOW = 0.50;
     double GRAB_SPEED = 0.35;
     double GATE_SPEED = 0.35;
 
     // Intake motor constants
     double INTAKE_POWER = 0.75;
-    double INTAKE_PANIC_TIME = 0.15;
+    double INTAKE_PANIC_TIME = 0.10;
+    double INTAKE_PANIC_WAIT = 0.25;
 
     // Launcher constants
     double ClOSE_LAUNCH_TARGET_VELOCITY = 1300;
     double CLOSE_LAUNCH_MIN_VELOCITY = 1280;
     double CLOSE_LAUNCH_INTERVAL_SECONDS = 0.25;
 
-    double FAR_LAUNCH_TARGET_VELOCITY = 1600;
-    double FAR_LAUNCH_MIN_VELOCITY = 1580;
+    double FAR_LAUNCH_TARGET_VELOCITY = 1575;
+    double FAR_LAUNCH_MIN_VELOCITY = 1555;
     double FAR_LAUNCH_INTERVAL_SECONDS = 0.75;
 
     double FEEDER_RUN_SECONDS = 0.10;
+    double FEEDER_PANIC_INTERVAL = 0.10 + FEEDER_RUN_SECONDS;
     double LAUNCH_COOL_OFF_SECONDS = 0.20;
 
     // OpMode timers
     Timer runTime = new Timer();
     Timer pathTimer = new Timer();
     Timer launchTimer = new Timer();
+    Timer sensorTimer = new Timer();
 
     @Override
     public void init() {
@@ -105,12 +112,12 @@ public class PedroPathingAutoOpMode extends OpMode {
         followerPose = useRedPose ? new FollowerPose("red") : new FollowerPose("blue");
         pathBuilder = new FollowerPathBuilder(follower, followerPose);
 
-        if (useFarStartPose)
+        if (useFarStartPose) // use far start pose if configured
             followerPose.useFarStartPose();
         else
             followerPose.useCloseStartPose();
 
-        if (useFarStopPose)
+        if (useFarStopPose) // use far stop pose if configured
             followerPose.useFarStopPose();
         else
             followerPose.useCloseStopPose();
@@ -166,16 +173,24 @@ public class PedroPathingAutoOpMode extends OpMode {
     @Override
     public void start() {
         runTime.resetTimer();
+        sensorTimer.resetTimer();
         setPathState(PathState.START_POSE);
         getNextAction();
     }
 
     @Override
     public void loop() {
-        if (runTime.getElapsedTimeSeconds() > 30) // stop after 30 seconds
+        if (runTime.getElapsedTimeSeconds() > 30) { // stop after 30 seconds
+            intakeMotor.setIntakeOff();
+            launcher.setLauncherOff();
             terminateOpModeNow();
-        else
-            updatePathState(); // Follower drives through the built path                                                                                                  e given pathing
+        } else {
+            // Follower drives through the updated path chains
+            updatePathState();
+
+            // Reverse feeders periodically if intake is on
+            customLauncherPanic(FEEDER_PANIC_INTERVAL);
+        }
 
         // Update follower pathing on every iteration
         follower.update();
@@ -211,12 +226,12 @@ public class PedroPathingAutoOpMode extends OpMode {
                     if (isNextAction(FollowerAction.CLOSE_LAUNCH)) {
                         intakeMotor.setIntakeOn();
                         followerPose.useCloseScorePose();
-                        followingPath(pathBuilder, FollowerPathBuilder::buildPaths_startPos2Score);
+                        followingPath(pathBuilder, FollowerPathBuilder::buildPaths_startPos2Score, PATH_SPEED_SLOW);
                         setPathState(PathState.SCORE_POSE);
                     } else if (isNextAction(FollowerAction.FAR_LAUNCH)) {
                         intakeMotor.setIntakeOn();
                         followerPose.useFarScorePose();
-                        followingPath(pathBuilder, FollowerPathBuilder::buildPaths_startPos2Score);
+                        followingPath(pathBuilder, FollowerPathBuilder::buildPaths_startPos2Score, PATH_SPEED_SLOW);
                         setPathState(PathState.SCORE_POSE);
                     } else if (isNextAction(FollowerAction.STOP)) {
                         followingPath(pathBuilder, FollowerPathBuilder::buildPaths_startPos2Stop);
@@ -380,7 +395,7 @@ public class PedroPathingAutoOpMode extends OpMode {
                             }
                         } else if (isNextAction(FollowerAction.FAR_LAUNCH)) {
                             followerPose.useFarScorePose();
-                            followingPath(pathBuilder, FollowerPathBuilder::buildPaths_lowSpkEnd2Score);
+                            followingPath(pathBuilder, FollowerPathBuilder::buildPaths_lowSpkEnd2Score, PATH_SPEED_SLOW);
                             setPathState(PathState.SCORE_POSE);
                         } else if (isNextAction(FollowerAction.STOP)) {
                             followingPath(pathBuilder, FollowerPathBuilder::buildPaths_lowSpkEnd2Stop);
@@ -465,7 +480,7 @@ public class PedroPathingAutoOpMode extends OpMode {
         }
     }
 
-    void getNextAction() {
+    void getNextAction() { // get next action from the follower action sequence
         nextAction = followerSelectedAction.getNextAction();
     }
 
@@ -479,46 +494,67 @@ public class PedroPathingAutoOpMode extends OpMode {
     }
 
     void followingPath(FollowerPathBuilder pb, Function<FollowerPathBuilder, PathChain> buildPath) {
-        followingPath(pb, buildPath, PATH_SPEED);
+        followingPath(pb, buildPath, PATH_SPEED_NORMAL);
+    }
+
+    void customLauncherPanic(double interval) {
+        if (intakeMotor.isBusy() && (sensorTimer.getElapsedTimeSeconds() > interval)) {
+            if (!launcher.isBusy()) { // only set launcher panic if it is not busy
+                launcher.launch(false, false, true);
+                do {} while (!launcher.isBusy());
+                launcher.launch(false, false, false);
+            }
+            sensorTimer.resetTimer();
+        }
     }
 
     void customLaunchCloseShot() {
-        if (!ballSensor.isDetected())
-            intakeMotor.setIntakePanic(INTAKE_PANIC_TIME);
+        if (!ballSensor.isDetected()) {
+            intakeMotor.setIntakePanic();
+            launchTimer.resetTimer();
+            do {} while (launchTimer.getElapsedTimeSeconds() < INTAKE_PANIC_WAIT);
+        }
         launcher.launchCloseShot();
     }
 
     void customLaunchCloseShot(int count, double interval) {
-        launcher.launcherOnAtIdle();
+        launcher.launcherOnAtIdle(); // keep launcher on between consecutive launches
+
         for (int i = 0; i < count; i++) {
             launchTimer.resetTimer();
-            do {} while (launchTimer.getElapsedTimeSeconds() < interval);
+            do {} while (launchTimer.getElapsedTimeSeconds() < interval); // wait between launches
             customLaunchCloseShot();
         }
         launcher.launcherOffAtIdle();
+
         if (ballSensor.isDetected()) // additional last check
             launcher.launchCloseShot();
         else
-            launcher.setLauncherOff();
+            launcher.setLauncherOff(); // set launcher off after last shot
     }
 
     void customLaunchFarShot() {
-        if (!ballSensor.isDetected())
-            intakeMotor.setIntakePanic(INTAKE_PANIC_TIME);
+        if (!ballSensor.isDetected()) {
+            intakeMotor.setIntakePanic();
+            launchTimer.resetTimer();
+            do {} while (launchTimer.getElapsedTimeSeconds() < INTAKE_PANIC_WAIT);
+        }
         launcher.launchFarShot();
     }
 
     void customLaunchFarShot(int count, double interval) {
-        launcher.launcherOnAtIdle();
+        launcher.launcherOnAtIdle(); // keep launcher on between consecutive launches
+
         for (int i = 0; i < count; i++) {
             launchTimer.resetTimer();
-            do {} while (launchTimer.getElapsedTimeSeconds() < interval);
+            do {} while (launchTimer.getElapsedTimeSeconds() < interval); // wait between launches
             customLaunchFarShot();
         }
         launcher.launcherOffAtIdle();
+
         if (ballSensor.isDetected()) // additional last check
             launcher.launchFarShot();
         else
-            launcher.setLauncherOff();
+            launcher.setLauncherOff(); // set launcher off after last shot
     }
 }
