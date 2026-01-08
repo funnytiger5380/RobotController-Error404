@@ -78,12 +78,12 @@ public class PedroPathingAutoOpMode extends OpMode {
     // Drivetrain constants
     double PATH_SPEED_NORMAL = 0.90;
     double PATH_SPEED_SLOW = 0.70;
-    double GRAB_SPEED = 0.60;
+    double GRAB_SPEED = 0.50;
     double GATE_SPEED = 0.50;
 
     // Intake motor constants
     double INTAKE_POWER = 0.80;
-    double INTAKE_PANIC_TIME = 0.10;
+    double INTAKE_PANIC_TIME = 0.05;
     double INTAKE_PANIC_WAIT = 0.25;
 
     // Launcher constants
@@ -96,7 +96,7 @@ public class PedroPathingAutoOpMode extends OpMode {
     double FAR_LAUNCH_INTERVAL_SECONDS = 0.75;
 
     double FEEDER_RUN_SECONDS = 0.10;
-    double FEEDER_PANIC_INTERVAL = 0.80 + FEEDER_RUN_SECONDS;
+    double FEEDER_PANIC_INTERVAL = 0.80;
     double LAUNCH_COOL_OFF_SECONDS = 0.20;
 
     // OpMode timers
@@ -173,6 +173,7 @@ public class PedroPathingAutoOpMode extends OpMode {
     @Override
     public void start() {
         runTime.resetTimer();
+        sensorTimer.resetTimer();
         setPathState(PathState.START_POSE);
         getNextAction();
     }
@@ -518,10 +519,12 @@ public class PedroPathingAutoOpMode extends OpMode {
         launcher.launcherOnAtIdle(); // keep launcher on between consecutive launches
 
         for (int i = count; i > 0; i--) {
-            if (i == 1) { // last count launch
-                customLaunchCloseShot();
-            } else {
+            if (i == count || i == 1)
                 launcher.launchCloseShot();
+            else
+                customLaunchCloseShot();
+
+            if (i > 1) {
                 launchTimer.resetTimer();
                 do {} while (launchTimer.getElapsedTimeSeconds() < interval); // interval between launches
             }
@@ -547,10 +550,12 @@ public class PedroPathingAutoOpMode extends OpMode {
         launcher.launcherOnAtIdle(); // keep launcher on between consecutive launches
 
         for (int i = count; i > 0; i--) {
-            if (i == 1) { // last count launch
-                customLaunchFarShot();
-            } else {
+            if (i == count || i == 1)
                 launcher.launchFarShot();
+            else
+                customLaunchFarShot();
+
+            if (i > 1) {
                 launchTimer.resetTimer();
                 do {} while (launchTimer.getElapsedTimeSeconds() < interval); // interval between launches
             }
