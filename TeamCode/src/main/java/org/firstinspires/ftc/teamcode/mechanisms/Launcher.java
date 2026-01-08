@@ -205,6 +205,10 @@ public class Launcher {
         }
     }
 
+    public void launch(boolean closeShot, boolean farShot) {
+        launch(closeShot, farShot, false);
+    }
+
     public void launch(boolean closeShot, boolean farShot, boolean panic) {
         switch (launchState) {
             case IDLE:
