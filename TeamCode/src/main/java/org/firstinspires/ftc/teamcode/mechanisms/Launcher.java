@@ -158,9 +158,8 @@ public class Launcher {
     }
 
     public void launchCloseShot() {
-        // wait until last busy is done so it guarantees a single shot after launch
-        do { launch(true, false, false); } while (isBusy);
-        // wait until current shot is done to return the function call
+        launch(true, false, false);
+        // wait until the current shot is done
         do { launch(false, false, false); } while (isBusy);
     }
 
@@ -169,19 +168,22 @@ public class Launcher {
     }
 
     public void launchCloseShot(int count, double interval) {
-        launcherOnAtIdle(); // set to keep launcher fly wheel on between multiple shots
+        launcherOnAtIdle(); // set to keep launcher fly wheel on between multiple launches
         for (int i = count; i > 0; i--) {
-            launchTimer.reset();
-            do {} while (launchTimer.seconds() < interval);
-            if (i == 1) launcherOffAtIdle(); // set to launcher fly wheel off after the last shoot
-            launchCloseShot();
+            if (i == 1) { // set to launcher fly wheel off after the last launch
+                launcherOffAtIdle();
+                launchCloseShot();
+            } else {
+                launchCloseShot();
+                launchTimer.reset();
+                do {} while (launchTimer.seconds() < interval); // interval between launches
+            }
         }
     }
 
     public void launchFarShot() {
-        // wait until last busy is done so it guarantees a single shot after launch
-        do { launch(false, true, false); } while (isBusy);
-        // wait until current shot is done to return the function call
+        launch(false, true, false);
+        // wait until the current shot is done
         do { launch(false, false, false); } while (isBusy);
     }
 
@@ -190,12 +192,16 @@ public class Launcher {
     }
 
     public void launchFarShot(int count, double interval) {
-        launcherOnAtIdle(); // set to keep launcher fly wheel on between multiple shots
+        launcherOnAtIdle(); // set to keep launcher fly wheel on between multiple launches
         for (int i = count; i > 0; i--) {
-            launchTimer.reset();
-            do {} while (launchTimer.seconds() < interval);
-            if (i == 1) launcherOffAtIdle(); // set to launcher fly wheel off after the last shoot
-            launchFarShot();
+            if (i == 1) { // set to launcher fly wheel off after the last launch
+                launcherOffAtIdle();
+                launchFarShot();
+            } else {
+                launchFarShot();
+                launchTimer.reset();
+                do {} while (launchTimer.seconds() < interval); // interval between launches
+            }
         }
     }
 
