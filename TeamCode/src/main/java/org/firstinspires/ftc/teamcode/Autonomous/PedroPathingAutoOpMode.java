@@ -89,14 +89,14 @@ public class PedroPathingAutoOpMode extends OpMode {
     // Launcher constants
     double ClOSE_LAUNCH_TARGET_VELOCITY = 1300;
     double CLOSE_LAUNCH_MIN_VELOCITY = 1280;
-    double CLOSE_LAUNCH_INTERVAL_SECONDS = 0.25;
+    double CLOSE_LAUNCH_INTERVAL_SECONDS = 0.35;
 
     double FAR_LAUNCH_TARGET_VELOCITY = 1580;
     double FAR_LAUNCH_MIN_VELOCITY = 1560;
     double FAR_LAUNCH_INTERVAL_SECONDS = 0.75;
 
     double FEEDER_RUN_SECONDS = 0.10;
-    double FEEDER_PANIC_INTERVAL = 0.80;
+    double FEEDER_PANIC_INTERVAL = 0.10 + FEEDER_RUN_SECONDS;
     double LAUNCH_COOL_OFF_SECONDS = 0.20;
 
     // OpMode timers
@@ -524,17 +524,12 @@ public class PedroPathingAutoOpMode extends OpMode {
             else
                 customLaunchCloseShot();
 
-            if (i > 1) {
-                launchTimer.resetTimer();
-                do {} while (launchTimer.getElapsedTimeSeconds() < interval); // interval between launches
-            }
+            launchTimer.resetTimer();
+            do {} while (launchTimer.getElapsedTimeSeconds() < interval); // interval between launches
         }
         launcher.launcherOffAtIdle(); // set launcher off after next launch
+        launcher.launchCloseShot();   // last launch if still have ball
 
-        if (ballSensor.isDetected())  // last launch if still have ball
-            launcher.launchCloseShot();
-        else
-            launcher.setLauncherOff(); // set launcher off after last shot
     }
 
     void customLaunchFarShot() {

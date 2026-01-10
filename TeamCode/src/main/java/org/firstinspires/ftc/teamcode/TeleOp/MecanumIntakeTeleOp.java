@@ -42,7 +42,7 @@ public class MecanumIntakeTeleOp extends OpMode {
     private final double DRIVE_MAX_ANGULAR_SPEED = 0.7;
 
     private final double INTAKE_POWER = 0.75;
-    private final double INTAKE_PANIC_TIME = 0.10;
+    private final double INTAKE_PANIC_TIME = 0.05;
 
     private final double ClOSE_LAUNCH_TARGET_VELOCITY = 1300;
     private final double CLOSE_LAUNCH_MIN_VELOCITY    = 1280;
