@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.mechanisms.DigitalSensor;
+import org.firstinspires.ftc.teamcode.mechanisms.IndicatorLight;
 import org.firstinspires.ftc.teamcode.mechanisms.IntakeMotor;
 import org.firstinspires.ftc.teamcode.mechanisms.Launcher;
 import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
@@ -21,15 +22,12 @@ import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
  *  - One launcher motor using velocity control
  *  - Two feeder CRServos
  *  - Intake motor
- *
  * CONTROLS:
  *  Left stick Y = forward/backward (up = forward, down = backward)
  *  Left stick X = strafe (left = left, right = right)
  *  Right stick X = rotate (left = CCW, right = CW)
- *
  *  Right bumper = launcher to fire one close shot
  *  Right trigger = launcher to fire one far shot
- *
  *  Left bumper  = intake forward
  *  Left trigger = intake stop
  *  D-pad Left   = intake reverse
@@ -37,21 +35,21 @@ import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
 
 @TeleOp (name = "MecanumIntakeTeleOp", group = "Error404")
 public class MecanumIntakeTeleOp extends OpMode {
-    private final double DRIVE_MAX_POWER = 1.0;
-    private final double DRIVE_MAX_FORWARD_SPEED = 1.0;
-    private final double DRIVE_MAX_ANGULAR_SPEED = 0.7;
+    double DRIVE_MAX_POWER = 1.0;
+    double DRIVE_MAX_FORWARD_SPEED = 1.0;
+    double DRIVE_MAX_ANGULAR_SPEED = 0.7;
 
-    private final double INTAKE_POWER = 0.75;
-    private final double INTAKE_PANIC_TIME = 0.05;
+    double INTAKE_POWER = 0.75;
+    double INTAKE_PANIC_TIME = 0.05;
 
-    private final double ClOSE_LAUNCH_TARGET_VELOCITY = 1300;
-    private final double CLOSE_LAUNCH_MIN_VELOCITY    = 1280;
-    private final double FAR_LAUNCH_TARGET_VELOCITY   = 1600;
-    private final double FAR_LAUNCH_MIN_VELOCITY      = 1580;
+    double ClOSE_LAUNCH_TARGET_VELOCITY = 1300;
+    double CLOSE_LAUNCH_MIN_VELOCITY    = 1280;
+    double FAR_LAUNCH_TARGET_VELOCITY   = 1600;
+    double FAR_LAUNCH_MIN_VELOCITY      = 1580;
 
-    private final double FEEDER_RUN_SECONDS = 0.10;
-    private final double FEEDER_PANIC_INTERVAL = 0.10 + FEEDER_RUN_SECONDS;
-    private final double LAUNCH_COOLOFF_SECONDS = 0.20;
+    double FEEDER_RUN_SECONDS = 0.10;
+    double FEEDER_PANIC_INTERVAL = 0.10 + FEEDER_RUN_SECONDS;
+    double LAUNCH_COOL_OFF_SECONDS = 0.20;
 
     // === Drivetrain motors ===
     private final MecanumDrive mecanumDrive = new MecanumDrive()
@@ -81,9 +79,16 @@ public class MecanumIntakeTeleOp extends OpMode {
             .leftFeederDirection(FORWARD)
             .rightFeederDirection(REVERSE);
 
+    // === Indicator light ===
+    private final IndicatorLight indicatorLight = new IndicatorLight()
+            .indicatorName("indicator_light");
+
     // === Ball sensor ===
-    private final DigitalSensor ballSensor = new DigitalSensor()
-            .sensorName("ball_sensor")
+    private final DigitalSensor leftBallSensor = new DigitalSensor()
+            .sensorName("left_ball_sensor")
+            .sensorMode(DigitalChannel.Mode.INPUT);
+    private final DigitalSensor rightBallSensor = new DigitalSensor()
+            .sensorName("right_ball_sensor")
             .sensorMode(DigitalChannel.Mode.INPUT);
     private final ElapsedTime sensorTime = new ElapsedTime();
 
@@ -115,11 +120,15 @@ public class MecanumIntakeTeleOp extends OpMode {
         launcher.build(hardwareMap);
         launcher.setLauncherCloseVelocity(ClOSE_LAUNCH_TARGET_VELOCITY, CLOSE_LAUNCH_MIN_VELOCITY);
         launcher.setLauncherFarVelocity(FAR_LAUNCH_TARGET_VELOCITY, FAR_LAUNCH_MIN_VELOCITY);
-        launcher.setLauncherCoolOffSec(LAUNCH_COOLOFF_SECONDS);
+        launcher.setLauncherCoolOffSec(LAUNCH_COOL_OFF_SECONDS);
         launcher.setFeederRunSec(FEEDER_RUN_SECONDS);
 
+        /* === Indicator light === */
+        indicatorLight.build(hardwareMap);
+
         /* === Digital sensor === */
-        ballSensor.build(hardwareMap);
+        leftBallSensor.build(hardwareMap);
+        rightBallSensor.build(hardwareMap);
     }
 
     @Override
@@ -166,11 +175,6 @@ public class MecanumIntakeTeleOp extends OpMode {
 
     @Override
     public void loop() {
-        // === Drive Control ===
-        double forward = -gamepad1.left_stick_y * DRIVE_MAX_FORWARD_SPEED;
-        double strafe  = gamepad1.left_stick_x  * DRIVE_MAX_FORWARD_SPEED;
-        double rotate  = gamepad1.right_stick_x * DRIVE_MAX_ANGULAR_SPEED;
-
         if (runTime.seconds() > 120.0) {
             intakeMotor.setIntakeOff();
             launcher.setLauncherOff();
@@ -179,6 +183,19 @@ public class MecanumIntakeTeleOp extends OpMode {
             gamepad1.rumbleBlips(2);
             isAlmostEndGame = true;
         }
+
+        // === Ball sensor and Indicator light ===
+        boolean isBallDetected = leftBallSensor.isDetected() || rightBallSensor.isDetected();
+
+        if (isBallDetected)
+            indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.GREEN);
+        else
+            indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.RED);
+
+        // === Drive Control ===
+        double forward = -gamepad1.left_stick_y * DRIVE_MAX_FORWARD_SPEED;
+        double strafe  = gamepad1.left_stick_x  * DRIVE_MAX_FORWARD_SPEED;
+        double rotate  = gamepad1.right_stick_x * DRIVE_MAX_ANGULAR_SPEED;
 
         if (!isIMURequested)
             mecanumDrive.runDrive(forward, strafe, rotate);
@@ -200,6 +217,11 @@ public class MecanumIntakeTeleOp extends OpMode {
         if (launchPanic)
             sensorTime.reset();
         launcher.launch(closeShot, farShot, launchPanic);
+
+        if (isBallDetected)
+            indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.AZURE);
+        else
+            indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.ORANGE);
 
         // === Status Output ===
         telemetry.addData("Alliance Team", alliance.toString());

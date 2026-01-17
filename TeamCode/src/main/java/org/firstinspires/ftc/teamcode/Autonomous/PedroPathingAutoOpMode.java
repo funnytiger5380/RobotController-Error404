@@ -12,6 +12,7 @@ import org.firstinspires.ftc.teamcode.mechanisms.DigitalSensor;
 import org.firstinspires.ftc.teamcode.mechanisms.FollowerAction;
 import org.firstinspires.ftc.teamcode.mechanisms.FollowerPathBuilder;
 import org.firstinspires.ftc.teamcode.mechanisms.FollowerPose;
+import org.firstinspires.ftc.teamcode.mechanisms.IndicatorLight;
 import org.firstinspires.ftc.teamcode.mechanisms.IntakeMotor;
 import org.firstinspires.ftc.teamcode.mechanisms.Launcher;
 import org.firstinspires.ftc.teamcode.mechanisms.SelectableFollowerAction;
@@ -71,9 +72,17 @@ public class PedroPathingAutoOpMode extends OpMode {
             .rightFeederDirection(DcMotorSimple.Direction.REVERSE);
 
     // Sensor to detect whether the artifact is present for launching
-    DigitalSensor ballSensor = new DigitalSensor()
-            .sensorName("ball_sensor")
+    DigitalSensor leftBallSensor = new DigitalSensor()
+            .sensorName("left_ball_sensor")
             .sensorMode(DigitalChannel.Mode.INPUT);
+    DigitalSensor rightBallSensor = new DigitalSensor()
+            .sensorName("right_ball_sensor")
+            .sensorMode(DigitalChannel.Mode.INPUT);
+    boolean isBallDetected;
+
+    // Indicator light to signal the artifact status
+    IndicatorLight indicatorLight = new IndicatorLight()
+            .indicatorName("indicator_light");
 
     // Drivetrain constants
     double PATH_SPEED_NORMAL = 0.90;
@@ -139,7 +148,11 @@ public class PedroPathingAutoOpMode extends OpMode {
         launcher.setFeederRunSec(FEEDER_RUN_SECONDS);
 
         // Initialize Digital sensor
-        ballSensor.build(hardwareMap);
+        leftBallSensor.build(hardwareMap);
+        rightBallSensor.build(hardwareMap);
+
+        // Initialize Indicator light
+        indicatorLight.build(hardwareMap);
     }
 
     @Override
@@ -185,8 +198,14 @@ public class PedroPathingAutoOpMode extends OpMode {
             launcher.setLauncherOff();
             terminateOpModeNow();
         } else {
+            // Check if artifact is present
+            isBallDetected = leftBallSensor.isDetected() || rightBallSensor.isDetected();
+
             // Follower drives through the updated path chains
             updatePathState();
+
+            // Indicator light updates status
+            updateIndicator();
 
             // Reverse feeders periodically if intake is on
             customLauncherPanic(FEEDER_PANIC_INTERVAL);
@@ -507,7 +526,7 @@ public class PedroPathingAutoOpMode extends OpMode {
     }
 
     void customLaunchCloseShot() {
-        if (!ballSensor.isDetected()) {
+        if (!isBallDetected) {
             intakeMotor.setIntakePanic();
             launchTimer.resetTimer();
             do {} while (launchTimer.getElapsedTimeSeconds() < INTAKE_PANIC_WAIT);
@@ -529,7 +548,7 @@ public class PedroPathingAutoOpMode extends OpMode {
     }
 
     void customLaunchFarShot() {
-        if (!ballSensor.isDetected()) {
+        if (!isBallDetected) {
             intakeMotor.setIntakePanic();
             launchTimer.resetTimer();
             do {} while (launchTimer.getElapsedTimeSeconds() < INTAKE_PANIC_WAIT);
@@ -548,5 +567,12 @@ public class PedroPathingAutoOpMode extends OpMode {
         }
         launcher.launcherOffAtIdle(); // set launcher off after next launch
         launcher.launchFarShot();     // last launch if still have ball
+    }
+
+    void updateIndicator() {
+        if (isBallDetected)
+            indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.AZURE);
+        else
+            indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.ORANGE);
     }
 }
