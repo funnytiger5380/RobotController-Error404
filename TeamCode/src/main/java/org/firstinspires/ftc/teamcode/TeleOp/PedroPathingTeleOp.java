@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 
 import org.firstinspires.ftc.teamcode.mechanisms.DigitalSensor;
 import org.firstinspires.ftc.teamcode.mechanisms.FollowerPose;
+import org.firstinspires.ftc.teamcode.mechanisms.IndicatorLight;
 import org.firstinspires.ftc.teamcode.mechanisms.IntakeMotor;
 import org.firstinspires.ftc.teamcode.mechanisms.Launcher;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
@@ -60,9 +61,16 @@ public class PedroPathingTeleOp extends OpMode {
             .leftFeederDirection(DcMotorSimple.Direction.FORWARD)
             .rightFeederDirection(DcMotorSimple.Direction.REVERSE);
 
+    // Indicator light
+    IndicatorLight indicatorLight = new IndicatorLight()
+            .indicatorName("indicator_light");
+
     // Sensor to detect whether the artifact is present for launching
-    DigitalSensor ballSensor = new DigitalSensor()
-            .sensorName("ball_sensor")
+    DigitalSensor leftBallSensor = new DigitalSensor()
+            .sensorName("left_ball_sensor")
+            .sensorMode(DigitalChannel.Mode.INPUT);
+    DigitalSensor rightBallSensor = new DigitalSensor()
+            .sensorName("right_ball_sensor")
             .sensorMode(DigitalChannel.Mode.INPUT);
     Timer sensorTime = new Timer();
 
@@ -119,8 +127,12 @@ public class PedroPathingTeleOp extends OpMode {
         launcher.setLauncherCoolOffSec(LAUNCH_COOL_OFF_SECONDS);
         launcher.setFeederRunSec(FEEDER_RUN_SECONDS);
 
+        // Initialize indicator light
+        indicatorLight.build(hardwareMap);
+
         // Initialize Digital sensor
-        ballSensor.build(hardwareMap);
+        leftBallSensor.build(hardwareMap);
+        rightBallSensor.build(hardwareMap);
 
         if (isIMUResetRequested) {
             if (alliance == Alliance.BLUE)
@@ -168,6 +180,14 @@ public class PedroPathingTeleOp extends OpMode {
             isAlmostEndGame = true;
         }
 
+        // === Ball sensor and Indicator light
+        boolean isBallDetected = leftBallSensor.isDetected() || rightBallSensor.isDetected();
+
+        if (isBallDetected)
+            indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.AZURE);
+        else
+            indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.ORANGE);
+
         // === Drive Control ===
         double forward = -gamepad1.left_stick_y * DRIVE_MAX_FORWARD_SPEED;
         double strafe  = -gamepad1.left_stick_x * DRIVE_MAX_FORWARD_SPEED;
@@ -190,8 +210,8 @@ public class PedroPathingTeleOp extends OpMode {
         // === Launcher ===
         boolean closeShot   = gamepad1.right_bumper;
         boolean farShot     = gamepad1.right_trigger > 0.5;
-        boolean launchPanic = intakeMotor.isBusy() && ballSensor.isDetected() &&
-                                 (sensorTime.getElapsedTimeSeconds() > FEEDER_PANIC_INTERVAL);
+        boolean launchPanic = intakeMotor.isBusy() && isBallDetected &&
+                (sensorTime.getElapsedTimeSeconds() > FEEDER_PANIC_INTERVAL);
 
         if (launchPanic)
             sensorTime.resetTimer();
