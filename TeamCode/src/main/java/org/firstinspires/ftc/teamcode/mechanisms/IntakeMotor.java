@@ -20,7 +20,7 @@ public class IntakeMotor {
     private enum IntakeDirection { FORWARD, REVERSE }
     private IntakeDirection intakeDirection = IntakeDirection.FORWARD;
 
-    private enum IntakeState { OFF, ON, PANIC }
+    private enum IntakeState { OFF, ON, PANIC, MAX }
     private IntakeState intakeState = IntakeState.OFF;
 
     private double maxPower = 1.0;
@@ -28,6 +28,7 @@ public class IntakeMotor {
 
     private final ElapsedTime timer = new ElapsedTime();
     private double panicTime = 0.10;
+    private double maxTime = 0.20;
 
     private volatile boolean isBusy = false;
     private volatile boolean isPanic = false;
@@ -114,6 +115,9 @@ public class IntakeMotor {
         this.panicTime = panicTime;
     }
 
+    public void setMaxTime(double maxTime) {
+        this.maxTime = maxTime;
+    }
     public void setIntakeOff() {
         run(false, true, false);
     }
@@ -165,6 +169,7 @@ public class IntakeMotor {
                     intakeMotor.setPower(-1 * motorPower);
                 }
                 break;
+
             case ON:
                 if (intakeOff) {
                     isBusy = false;
@@ -178,18 +183,31 @@ public class IntakeMotor {
                     intakeMotor.setPower(-1 * motorPower);
                 }
                 break;
+
             case PANIC:
                 if (intakeOff) {
                     isBusy = false;
                     isPanic = false;
                     intakeState = IntakeState.OFF;
                     intakeMotor.setPower(0.0);
-                } else if (panic && intakeOn) {
+                } else if (panic) {
                     timer.reset();
-                } else if (timer.seconds() > panicTime) {
+                } else if (timer.seconds() >= panicTime) {
                     isPanic = false;
-                    intakeState = IntakeState.ON;
+                    timer.reset();
+                    intakeState = IntakeState.MAX;
                     intakeDirection = IntakeDirection.FORWARD;
+                    intakeMotor.setPower(maxPower);
+                }
+                break;
+
+            case MAX:
+                if (intakeOff) {
+                    isBusy = false;
+                    intakeState = IntakeState.OFF;
+                    intakeMotor.setPower(0.0);
+                } else if (timer.seconds() >= maxTime) {
+                    intakeState = IntakeState.ON;
                     intakeMotor.setPower(motorPower);
                 }
                 break;
