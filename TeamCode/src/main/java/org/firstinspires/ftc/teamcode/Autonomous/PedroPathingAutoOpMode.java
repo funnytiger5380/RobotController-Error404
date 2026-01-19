@@ -78,11 +78,12 @@ public class PedroPathingAutoOpMode extends OpMode {
     DigitalSensor rightBallSensor = new DigitalSensor()
             .sensorName("right_ball_sensor")
             .sensorMode(DigitalChannel.Mode.INPUT);
-    boolean isBallDetected;
+    boolean sensorDetected = false;
 
     // Indicator light to signal the artifact status
     IndicatorLight indicatorLight = new IndicatorLight()
             .indicatorName("indicator_light");
+    boolean indicateDetected = false;
 
     // Drivetrain constants
     double PATH_SPEED_NORMAL = 0.90;
@@ -91,18 +92,18 @@ public class PedroPathingAutoOpMode extends OpMode {
     double GATE_SPEED = 0.50;
 
     // Intake motor constants
-    double INTAKE_POWER = 0.80;
+    double INTAKE_POWER = 0.75;
     double INTAKE_PANIC_TIME = 0.05;
-    double INTAKE_PANIC_WAIT = 0.25;
+    double INTAKE_PANIC_WAIT = 0.80;
 
     // Launcher constants
     double ClOSE_LAUNCH_TARGET_VELOCITY = 1300;
     double CLOSE_LAUNCH_MIN_VELOCITY = 1280;
-    double CLOSE_LAUNCH_INTERVAL_SECONDS = 0.35;
+    double CLOSE_LAUNCH_INTERVAL_SECONDS = 0.50;
 
     double FAR_LAUNCH_TARGET_VELOCITY = 1580;
     double FAR_LAUNCH_MIN_VELOCITY = 1560;
-    double FAR_LAUNCH_INTERVAL_SECONDS = 1.2;
+    double FAR_LAUNCH_INTERVAL_SECONDS = 1.0;
 
     double FEEDER_RUN_SECONDS = 0.10;
     double FEEDER_PANIC_INTERVAL = 0.10 + FEEDER_RUN_SECONDS;
@@ -196,17 +197,11 @@ public class PedroPathingAutoOpMode extends OpMode {
         if (runTime.getElapsedTimeSeconds() > 30) { // stop after 30 seconds
             intakeMotor.setIntakeOff();
             launcher.setLauncherOff();
+            indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.OFF);
             terminateOpModeNow();
         } else {
-            // Check if artifact is present
-            isBallDetected = leftBallSensor.isDetected() || rightBallSensor.isDetected();
-
             // Follower drives through the updated path chains
             updatePathState();
-
-            // Indicator light updates status
-            updateIndicator();
-
             // Reverse feeders periodically if intake is on
             customLauncherPanic(FEEDER_PANIC_INTERVAL);
         }
@@ -516,63 +511,90 @@ public class PedroPathingAutoOpMode extends OpMode {
         followingPath(pb, buildPath, PATH_SPEED_NORMAL);
     }
 
-    void customLauncherPanic(double interval) {
-        if (intakeMotor.isBusy() && (sensorTimer.getElapsedTimeSeconds() > interval)) {
-            if (!launcher.isBusy()) { // only set launcher panic if it is not busy
-                launcher.launch(false, false, true);
+    boolean isBallDetected() {
+        sensorDetected = leftBallSensor.isDetected() || rightBallSensor.isDetected();
+
+        if (sensorDetected) {
+            if (!indicateDetected) {
+                indicateDetected = true; // update indicator light
+                indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.GREEN);
             }
-            sensorTimer.resetTimer();
+        } else {
+            if (indicateDetected) {
+                indicateDetected = false; // update indicator light
+                indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.RED);
+            }
+        }
+        return sensorDetected;
+    }
+
+    void customLauncherPanic(double interval) {
+        if (isBallDetected()) {
+            if (intakeMotor.isBusy() && (sensorTimer.getElapsedTimeSeconds() > interval)) {
+                if (!launcher.isBusy()) { // only set launcher panic if it is not busy
+                    launcher.launch(false, false, true);
+                }
+                sensorTimer.resetTimer();
+            }
         }
     }
 
-    void customLaunchCloseShot() {
-        if (!isBallDetected) {
+    void customLaunchCloseShot(int numShot, double interval) {
+        int count = 0;
+        launcher.launcherOnAtIdle(); // keep launcher on between consecutive launches
+
+        for (int i = 0; i < numShot; i++) {
+            if (!isBallDetected()) {
+                intakeMotor.setIntakePanic();
+                launchTimer.resetTimer();
+                do {} while (launchTimer.getElapsedTimeSeconds() < INTAKE_PANIC_WAIT);
+            }
+            if (isBallDetected()) {
+                launcher.launchCloseShot();
+                if (++count < numShot) {
+                    launchTimer.resetTimer();
+                    do {} while (launchTimer.getElapsedTimeSeconds() < interval); // interval between launches
+                }
+            }
+        }
+        launcher.launcherOffAtIdle(); // set launcher off after next launch
+
+        if (!isBallDetected() && (count < numShot)) {
             intakeMotor.setIntakePanic();
             launchTimer.resetTimer();
             do {} while (launchTimer.getElapsedTimeSeconds() < INTAKE_PANIC_WAIT);
-        }
-        launcher.launchCloseShot();
+            launcher.launchCloseShot(); // last launch if still have ball
+        } else
+            launcher.setLauncherOff();
+
     }
 
-    void customLaunchCloseShot(int count, double interval) {
+    void customLaunchFarShot(int numShot, double interval) {
+        int count = 0;
         launcher.launcherOnAtIdle(); // keep launcher on between consecutive launches
 
-        for (int i = count; i > 0; i--) {
-            launcher.launchCloseShot();
-            launchTimer.resetTimer();
-            do {} while (launchTimer.getElapsedTimeSeconds() < interval); // interval between launches
+        for (int i = 0; i < numShot; i++) {
+            if (!isBallDetected()) {
+                intakeMotor.setIntakePanic();
+                launchTimer.resetTimer();
+                do {} while (launchTimer.getElapsedTimeSeconds() < INTAKE_PANIC_WAIT);
+            }
+            if (isBallDetected()) {
+                launcher.launchFarShot();
+                if (++count < numShot) {
+                    launchTimer.resetTimer();
+                    do {} while (launchTimer.getElapsedTimeSeconds() < interval); // interval between launches
+                }
+            }
         }
         launcher.launcherOffAtIdle(); // set launcher off after next launch
-        launcher.launchCloseShot();   // last launch if still have ball
 
-    }
-
-    void customLaunchFarShot() {
-        if (!isBallDetected) {
+        if (!isBallDetected() && (count < numShot)) {
             intakeMotor.setIntakePanic();
             launchTimer.resetTimer();
             do {} while (launchTimer.getElapsedTimeSeconds() < INTAKE_PANIC_WAIT);
-        }
-        launcher.launchFarShot();
-    }
-
-    void customLaunchFarShot(int count, double interval) {
-        launcher.launcherOnAtIdle(); // keep launcher on between consecutive launches
-
-        for (int i = count; i > 0; i--) {
-            launcher.launchFarShot();
-            launchTimer.resetTimer();
-            do {} while (launchTimer.getElapsedTimeSeconds() < interval); // interval between launches
-
-        }
-        launcher.launcherOffAtIdle(); // set launcher off after next launch
-        launcher.launchFarShot();     // last launch if still have ball
-    }
-
-    void updateIndicator() {
-        if (isBallDetected)
-            indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.AZURE);
-        else
-            indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.ORANGE);
+            launcher.launchFarShot(); // last launch if still have ball
+        } else
+            launcher.setLauncherOff();
     }
 }
