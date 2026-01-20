@@ -64,6 +64,7 @@ public class PedroPathingTeleOp extends OpMode {
     // Indicator light
     IndicatorLight indicatorLight = new IndicatorLight()
             .indicatorName("indicator_light");
+    boolean indicateDetected = false;
 
     // Sensor to detect whether the artifact is present for launching
     DigitalSensor leftBallSensor = new DigitalSensor()
@@ -173,20 +174,30 @@ public class PedroPathingTeleOp extends OpMode {
 
     @Override
     public void loop() {
-        if (runTime.getElapsedTimeSeconds() > 120)
+        if (runTime.getElapsedTimeSeconds() > 120) {
+            intakeMotor.setIntakeOff();
+            launcher.setLauncherOff();
+            indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.OFF);
             terminateOpModeNow();
-        else if (runTime.getElapsedTimeSeconds() > 112 && !isAlmostEndGame) {
+        } else if (runTime.getElapsedTimeSeconds() > 113 && !isAlmostEndGame) {
             gamepad1.rumbleBlips(2); // gamepad rumble
             isAlmostEndGame = true;
         }
 
-        // === Ball sensor and Indicator light
+        // === Ball sensor and Indicator light ===
         boolean isBallDetected = leftBallSensor.isDetected() || rightBallSensor.isDetected();
 
-        if (isBallDetected)
-            indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.AZURE);
-        else
-            indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.ORANGE);
+        if (isBallDetected) {
+            if (!indicateDetected) {
+                indicateDetected = true;
+                indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.GREEN);
+            }
+        } else {
+            if (indicateDetected) {
+                indicateDetected = false;
+                indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.RED);
+            }
+        }
 
         // === Drive Control ===
         double forward = -gamepad1.left_stick_y * DRIVE_MAX_FORWARD_SPEED;
@@ -211,7 +222,7 @@ public class PedroPathingTeleOp extends OpMode {
         boolean closeShot   = gamepad1.right_bumper;
         boolean farShot     = gamepad1.right_trigger > 0.5;
         boolean launchPanic = intakeMotor.isBusy() && isBallDetected &&
-                (sensorTime.getElapsedTimeSeconds() > FEEDER_PANIC_INTERVAL);
+                                (sensorTime.getElapsedTimeSeconds() > FEEDER_PANIC_INTERVAL);
 
         if (launchPanic)
             sensorTime.resetTimer();

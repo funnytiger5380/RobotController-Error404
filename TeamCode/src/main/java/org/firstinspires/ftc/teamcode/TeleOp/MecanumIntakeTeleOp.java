@@ -82,6 +82,7 @@ public class MecanumIntakeTeleOp extends OpMode {
     // === Indicator light ===
     private final IndicatorLight indicatorLight = new IndicatorLight()
             .indicatorName("indicator_light");
+    private boolean indicateDetected = false;
 
     // === Ball sensor ===
     private final DigitalSensor leftBallSensor = new DigitalSensor()
@@ -178,19 +179,12 @@ public class MecanumIntakeTeleOp extends OpMode {
         if (runTime.seconds() > 120.0) {
             intakeMotor.setIntakeOff();
             launcher.setLauncherOff();
+            indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.OFF);
             terminateOpModeNow();
-        } else if (runTime.seconds() > 112.0 && !isAlmostEndGame) {
+        } else if (runTime.seconds() > 113.0 && !isAlmostEndGame) {
             gamepad1.rumbleBlips(2);
             isAlmostEndGame = true;
         }
-
-        // === Ball sensor and Indicator light ===
-        boolean isBallDetected = leftBallSensor.isDetected() || rightBallSensor.isDetected();
-
-        if (isBallDetected)
-            indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.GREEN);
-        else
-            indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.RED);
 
         // === Drive Control ===
         double forward = -gamepad1.left_stick_y * DRIVE_MAX_FORWARD_SPEED;
@@ -209,19 +203,29 @@ public class MecanumIntakeTeleOp extends OpMode {
 
         intakeMotor.run(intakeOn, intakeOff, intakePanic);
 
+        // === Ball sensor and Indicator light ===
+        boolean isBallDetected = leftBallSensor.isDetected() || rightBallSensor.isDetected();
+
+        if (isBallDetected) {
+            if (!indicateDetected) {
+                indicateDetected = true;
+                indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.GREEN);
+            }
+        } else {
+            if (indicateDetected) {
+                indicateDetected = false;
+                indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.RED);
+            }
+        }
+
         // === Launcher ===
         boolean closeShot   = gamepad1.right_bumper;
         boolean farShot     = gamepad1.right_trigger > 0.5;
-        boolean launchPanic = intakeMotor.isBusy() && (sensorTime.seconds() > FEEDER_PANIC_INTERVAL);
-
+        boolean launchPanic = intakeMotor.isBusy() && isBallDetected &&
+                                (sensorTime.seconds() > FEEDER_PANIC_INTERVAL);
         if (launchPanic)
             sensorTime.reset();
         launcher.launch(closeShot, farShot, launchPanic);
-
-        if (isBallDetected)
-            indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.AZURE);
-        else
-            indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.ORANGE);
 
         // === Status Output ===
         telemetry.addData("Alliance Team", alliance.toString());
