@@ -50,9 +50,9 @@ public class FollowerPathBuilder {
      */
     public PathChain buildPaths_startPos2Score() {
         return follower.pathBuilder()
-                .addPath(new BezierLine(followerPose.startPose, followerPose.scorePose))
+                .addPath(new BezierLine(followerPose.startPose, followerPose.startScorePose))
                 .setLinearHeadingInterpolation(followerPose.startPose.getHeading(),
-                        followerPose.scorePose.getHeading())
+                        followerPose.startScorePose.getHeading())
                 .build();
     }
 
