@@ -125,9 +125,9 @@ public class FollowerPose {
         x_score_pose_close = 55.0;
         y_score_pose_close = 91.0;
         h_score_pose_close = 142.0;
-        x_stop_pose_close = 55.0;
+        x_stop_pose_close = 44.0;
         y_stop_pose_close = 69.0;
-        h_stop_pose_close = 0.0;
+        h_stop_pose_close = 180.0;
 
         x_start_pose_far = 56.0;
         y_start_pose_far = 9.0;
@@ -195,38 +195,32 @@ public class FollowerPose {
         x_start_pose_close = 119.5;
         y_start_pose_close = 126.5;
         h_start_pose_close = 24.0;
-
         x_start_score_close = 78.0; // 89.0; 1-7-26
         y_start_score_close = 95.0;  // 91.0; 1-7-26
         h_start_score_close = 34.0; // 38.0; 1-4-26
-
         x_score_pose_close = 78.0; // 89.0; 1-7-26
         y_score_pose_close = 95.0;  // 91.0; 1-7-26
-        h_score_pose_close = 26.0; // 38.0; 1-4-26
-
-        x_stop_pose_close = 89.0;
-        y_stop_pose_close = 69.0;
-        h_stop_pose_close = 170.0; // 180.0; 1-7-26
+        h_score_pose_close = 25.0; // 38.0; 1-4-26
+        x_stop_pose_close = 78.0;
+        y_stop_pose_close = 80.0;
+        h_stop_pose_close = -10.0; // 180.0; 1-7-26
 
         x_start_pose_far = 88.0;
         y_start_pose_far = 9.0;
         h_start_pose_far = 86.0; // 90.0 1-4-26 (don't touch)
-
         x_start_score_far = 88.0;
         y_start_score_far = 14.0;
-        h_start_score_far = 66.0; // 65.0 1-4-26 (don't touch)
-
+        h_start_score_far = 67.0; // 65.0 1-4-26 (don't touch)
         x_score_pose_far = 88.0;
         y_score_pose_far = 14.0;
         h_score_pose_far = 62.0; // 65.0 1-4-26 (don't touch)
-
         x_stop_pose_far = 88.0;
         y_stop_pose_far = 33.0;
         h_stop_pose_far = 90.0;
 
         x_high_spike_line_start = 89.0;  // 100.0 1-7-26
-        y_high_spike_line_start = 86.0;  // 84.0 1-4-26
-        h_high_spike_line_start = -11.0; // 0.0;
+        y_high_spike_line_start = 86.5;  // 84.0 1-4-26
+        h_high_spike_line_start = -12.0; // 0.0;
         x_high_spike_line_end = 113.0;
         y_high_spike_line_end = y_high_spike_line_start;
         h_high_spike_line_end = h_high_spike_line_start;
@@ -235,11 +229,11 @@ public class FollowerPose {
         h_high_spike_line_return = h_high_spike_line_start + 20.0;
 
         x_mid_spike_line_start = 85.0; // 100.0 1-7-26
-        y_mid_spike_line_start = 62.0; // 60.0; 1-4-26
+        y_mid_spike_line_start = 63.0; // 60.0; 1-4-26
         h_mid_spike_line_start = h_high_spike_line_start;
-        x_mid_spike_line_end = 115.0;
+        x_mid_spike_line_end = 111.5;
         y_mid_spike_line_end = y_mid_spike_line_start;
-        h_mid_spike_line_end = h_mid_spike_line_start;
+        h_mid_spike_line_end = h_mid_spike_line_start - 5.0;
         x_mid_spike_line_return = x_mid_spike_line_start;
         y_mid_spike_line_return = y_mid_spike_line_start;
         h_mid_spike_line_return = h_mid_spike_line_start + 20.0;

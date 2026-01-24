@@ -97,8 +97,8 @@ public class PedroPathingAutoOpMode extends OpMode {
     double INTAKE_PANIC_WAIT = 0.80;
 
     // Launcher constants
-    double ClOSE_LAUNCH_TARGET_VELOCITY = 1300;
-    double CLOSE_LAUNCH_MIN_VELOCITY = 1280;
+    double ClOSE_LAUNCH_TARGET_VELOCITY = 1280;
+    double CLOSE_LAUNCH_MIN_VELOCITY = 1260;
     double CLOSE_LAUNCH_INTERVAL_SECONDS = 0.50;
 
     double FAR_LAUNCH_TARGET_VELOCITY = 1580;
