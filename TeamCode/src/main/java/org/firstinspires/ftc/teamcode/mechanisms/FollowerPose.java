@@ -13,9 +13,11 @@ import com.pedropathing.geometry.Pose;
  */
 public class FollowerPose {
     private double x_start_pose_close, y_start_pose_close, h_start_pose_close;
+    private double x_start_score_close, y_start_score_close, h_start_score_close;
     private double x_score_pose_close, y_score_pose_close, h_score_pose_close;
     private double x_stop_pose_close, y_stop_pose_close, h_stop_pose_close;
     private double x_start_pose_far, y_start_pose_far, h_start_pose_far;
+    private double x_start_score_far, y_start_score_far, h_start_score_far;
     private double x_score_pose_far, y_score_pose_far, h_score_pose_far;
     private double x_stop_pose_far, y_stop_pose_far, h_stop_pose_far;
     private double x_high_spike_line_start, y_high_spike_line_start, h_high_spike_line_start;
@@ -31,7 +33,7 @@ public class FollowerPose {
     private double x_gate_contact, y_gate_contact, h_gate_contact_up, h_gate_contact_dw;
     private double x_gate_return, y_gate_return, h_gate_return;
 
-    public Pose startPose, scorePose, stopPose, highSpkPose, highSpkEnd, highSpkReturn,
+    public Pose startPose, startScorePose, scorePose, stopPose, highSpkPose, highSpkEnd, highSpkReturn,
             midSpkPose, midSpkEnd, midSpkReturn, lowSpkPose, lowSpkEnd, lowSpkReturn,
             gatePoseUp, gatePoseDw, gateContactUp, gateContactDw, gateReturn;
 
@@ -39,6 +41,11 @@ public class FollowerPose {
      * or the field boundary.
      */
     public void setStartPose(double x, double y, double h) { startPose = new Pose(x, y, h); }
+
+    /** Set start scoring position (x, y, heading): face the goal wall in preparing to score the
+     * artifacts, only used after the starting position.
+     */
+    public void setStartScorePose(double x, double y, double h) { startScorePose = new Pose(x, y, h); }
 
     /** Set scoring position (x, y, heading): face the goal wall in preparing to score the artifacts.
      */
@@ -112,19 +119,25 @@ public class FollowerPose {
         x_start_pose_close = 24.5;
         y_start_pose_close = 126.5;
         h_start_pose_close = 144.0;
+        x_start_score_close = 55.0;
+        y_start_score_close = 91.0;
+        h_start_score_close = 142.0;
         x_score_pose_close = 55.0;
         y_score_pose_close = 91.0;
         h_score_pose_close = 142.0;
-        x_stop_pose_close = 55.0;
+        x_stop_pose_close = 44.0;
         y_stop_pose_close = 69.0;
-        h_stop_pose_close = 90.0;
+        h_stop_pose_close = 180.0;
 
         x_start_pose_far = 56.0;
         y_start_pose_far = 9.0;
-        h_start_pose_far = 92.0;  //90.0 1-4-26
+        h_start_pose_far = 90.0;
+        x_start_score_far = 56.0;
+        y_start_score_far = 14.0;
+        h_start_score_far = 116.0;
         x_score_pose_far = 56.0;
-        y_score_pose_far = 14.0;
-        h_score_pose_far = 118.0; //115.0 1-4-26
+        y_score_pose_far = 15.0;
+        h_score_pose_far = 124.0;
         x_stop_pose_far = 56.0;
         y_stop_pose_far = 33.0;
         h_stop_pose_far = 90.0;
@@ -182,26 +195,32 @@ public class FollowerPose {
         x_start_pose_close = 119.5;
         y_start_pose_close = 126.5;
         h_start_pose_close = 24.0;
+        x_start_score_close = 78.0; // 89.0; 1-7-26
+        y_start_score_close = 95.0;  // 91.0; 1-7-26
+        h_start_score_close = 34.0; // 38.0; 1-4-26
         x_score_pose_close = 78.0; // 89.0; 1-7-26
         y_score_pose_close = 95.0;  // 91.0; 1-7-26
-        h_score_pose_close = 28.0; // 38.0; 1-4-26
-        x_stop_pose_close = 89.0;
-        y_stop_pose_close = 69.0;
-        h_stop_pose_close = 80.0; // 90.0; 1-7-26
+        h_score_pose_close = 25.0; // 38.0; 1-4-26
+        x_stop_pose_close = 78.0;
+        y_stop_pose_close = 80.0;
+        h_stop_pose_close = -10.0; // 180.0; 1-7-26
 
         x_start_pose_far = 88.0;
         y_start_pose_far = 9.0;
         h_start_pose_far = 86.0; // 90.0 1-4-26 (don't touch)
+        x_start_score_far = 88.0;
+        y_start_score_far = 14.0;
+        h_start_score_far = 67.0; // 65.0 1-4-26 (don't touch)
         x_score_pose_far = 88.0;
         y_score_pose_far = 14.0;
-        h_score_pose_far = 66.0; // 65.0 1-4-26 (don't touch)
+        h_score_pose_far = 62.0; // 65.0 1-4-26 (don't touch)
         x_stop_pose_far = 88.0;
         y_stop_pose_far = 33.0;
         h_stop_pose_far = 90.0;
 
         x_high_spike_line_start = 89.0;  // 100.0 1-7-26
-        y_high_spike_line_start = 86.0;  // 84.0 1-4-26
-        h_high_spike_line_start = -11.0; // 0.0;
+        y_high_spike_line_start = 86.5;  // 84.0 1-4-26
+        h_high_spike_line_start = -12.0; // 0.0;
         x_high_spike_line_end = 113.0;
         y_high_spike_line_end = y_high_spike_line_start;
         h_high_spike_line_end = h_high_spike_line_start;
@@ -209,18 +228,17 @@ public class FollowerPose {
         y_high_spike_line_return = y_high_spike_line_start;
         h_high_spike_line_return = h_high_spike_line_start + 20.0;
 
-
-        x_mid_spike_line_start = 89.0; // 100.0 1-7-26
-        y_mid_spike_line_start = 62.0; // 60.0; 1-4-26
+        x_mid_spike_line_start = 85.0; // 100.0 1-7-26
+        y_mid_spike_line_start = 63.0; // 60.0; 1-4-26
         h_mid_spike_line_start = h_high_spike_line_start;
-        x_mid_spike_line_end = 123.0;
+        x_mid_spike_line_end = 111.5;
         y_mid_spike_line_end = y_mid_spike_line_start;
-        h_mid_spike_line_end = h_mid_spike_line_start;
+        h_mid_spike_line_end = h_mid_spike_line_start - 5.0;
         x_mid_spike_line_return = x_mid_spike_line_start;
         y_mid_spike_line_return = y_mid_spike_line_start;
         h_mid_spike_line_return = h_mid_spike_line_start + 20.0;
 
-        x_low_spike_line_start = 89.0; // 100.0
+        x_low_spike_line_start = 85.0; // 100.0
         y_low_spike_line_start = 32.5; // 36.0 1-4-26
         h_low_spike_line_start = h_high_spike_line_start;
         x_low_spike_line_end = 123.0;
@@ -249,6 +267,7 @@ public class FollowerPose {
      */
     public void setAllPose() {
         setStartPose(x_start_pose_close, y_start_pose_close, Math.toRadians(h_start_pose_close));
+        setStartScorePose(x_start_score_close, y_start_score_close, Math.toRadians(h_start_score_close));
         setScorePose(x_score_pose_close, y_score_pose_close, Math.toRadians(h_score_pose_close));
         setStopPose(x_stop_pose_close, y_stop_pose_close, Math.toRadians(h_stop_pose_close));
 
@@ -280,6 +299,7 @@ public class FollowerPose {
     /** Set to use the far scoring position.
      */
     public void useFarScorePose() {
+        setStartScorePose(x_start_score_far, y_start_score_far, Math.toRadians(h_start_score_far));
         setScorePose(x_score_pose_far, y_score_pose_far, Math.toRadians(h_score_pose_far));
     }
 
@@ -298,6 +318,7 @@ public class FollowerPose {
     /** Set to use the close scoring position.
      */
     public void useCloseScorePose() {
+        setStartScorePose(x_start_score_close, y_start_score_close, Math.toRadians(h_start_score_close));
         setScorePose(x_score_pose_close, y_score_pose_close, Math.toRadians(h_score_pose_close));
     }
 

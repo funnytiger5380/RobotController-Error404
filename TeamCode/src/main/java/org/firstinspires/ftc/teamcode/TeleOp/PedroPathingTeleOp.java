@@ -82,7 +82,7 @@ public class PedroPathingTeleOp extends OpMode {
 
     // Intake motor constants
     double INTAKE_POWER = 0.75;
-    double INTAKE_PANIC_TIME = 0.05;
+    double INTAKE_PANIC_TIME = 0.10;
 
     // Launcher constants
     double ClOSE_LAUNCH_TARGET_VELOCITY = 1300;
