@@ -69,14 +69,12 @@ public class FollowerPathBuilder {
 
     /**
      * Returns: PathChain from the Follower's start position to gate opening standby position.
-     * The Follower will have a 90 degrees heading in the field (heading away from audience) at
-     * finish.
      */
     public PathChain buildPaths_startPos2Gate() {
         return follower.pathBuilder()
-                .addPath(new BezierLine(followerPose.startPose, followerPose.gatePoseUp))
+                .addPath(new BezierLine(followerPose.startPose, followerPose.gatePose))
                 .setLinearHeadingInterpolation(followerPose.startPose.getHeading(),
-                        followerPose.gatePoseUp.getHeading())
+                        followerPose.gatePose.getHeading())
                 .build();
     }
 
@@ -132,14 +130,12 @@ public class FollowerPathBuilder {
 
     /**
      * Returns: PathChain from the Follower's scoring position to gate opening standby position.
-     * The Follower will have a 90 degrees heading in the field (heading away from audience) at
-     * finish.
      */
     public PathChain buildPaths_scorePos2Gate() {
         return follower.pathBuilder()
-                .addPath(new BezierLine(followerPose.scorePose, followerPose.gatePoseUp))
+                .addPath(new BezierLine(followerPose.scorePose, followerPose.gatePose))
                 .setLinearHeadingInterpolation(followerPose.scorePose.getHeading(),
-                        followerPose.gatePoseUp.getHeading())
+                        followerPose.gatePose.getHeading())
                 .build();
     }
 
@@ -325,40 +321,37 @@ public class FollowerPathBuilder {
 
     /**
      * Returns: PathChain from the Follower's highest spark mark end position to gate opening
-     * standby position. The Follower will have a 90 degrees heading in the field (heading away
-     * from audience) at finish.
+     * standby position.
      */
     public PathChain buildPaths_highSpkEnd2Gate() {
         return follower.pathBuilder()
-                .addPath(new BezierLine(followerPose.highSpkEnd, followerPose.gatePoseUp))
+                .addPath(new BezierLine(followerPose.highSpkEnd, followerPose.gatePose))
                 .setLinearHeadingInterpolation(followerPose.highSpkEnd.getHeading(),
-                        followerPose.gatePoseUp.getHeading())
+                        followerPose.gatePose.getHeading())
                 .build();
     }
 
     /**
      * Returns: PathChain from the Follower's middle spark mark end position to gate opening
-     * standby position. The Follower will have a -90 degrees heading in the field
-     * (heading towards the audience) at finish.
+     * standby position.
      */
     public PathChain buildPaths_midSpkEnd2Gate() {
         return follower.pathBuilder()
-                .addPath(new BezierLine(followerPose.midSpkEnd, followerPose.gatePoseDw))
+                .addPath(new BezierLine(followerPose.midSpkEnd, followerPose.gatePose))
                 .setLinearHeadingInterpolation(followerPose.midSpkEnd.getHeading(),
-                        followerPose.gatePoseDw.getHeading())
+                        followerPose.gatePose.getHeading())
                 .build();
     }
 
     /**
      * Returns: PathChain from the Follower's lowest spark mark end position to gate opening
-     * standby position. The Follower will have a -90 degrees heading in the field
-     * (heading towards the audience) at finish.
+     * standby position.
      */
     public PathChain buildPaths_lowSpkEnd2Gate() {
         return follower.pathBuilder()
-                .addPath(new BezierLine(followerPose.lowSpkEnd, followerPose.gatePoseDw))
+                .addPath(new BezierLine(followerPose.lowSpkEnd, followerPose.gatePose))
                 .setLinearHeadingInterpolation(followerPose.lowSpkEnd.getHeading(),
-                        followerPose.gatePoseDw.getHeading())
+                        followerPose.gatePose.getHeading())
                 .build();
     }
 
@@ -397,54 +390,24 @@ public class FollowerPathBuilder {
 
     /**
      * Returns: PathChain from the Follower's gate opening standby position to contact position.
-     * The Follower will have a 90 degrees heading in the field (heading away from audience) at
-     * the gate contact position. The gate is expected to get opened and the artifacts will be
-     * released from the ramp.
+     * The gate is expected to get opened and the artifacts will be released from the ramp.
      */
-    public PathChain buildPaths_gatePosUp2Contact() {
+    public PathChain buildPaths_gatePos2Contact() {
         return follower.pathBuilder()
-                .addPath(new BezierLine(followerPose.gatePoseUp, followerPose.gateContactUp))
-                .setLinearHeadingInterpolation(followerPose.gatePoseUp.getHeading(),
-                        followerPose.gateContactUp.getHeading())
-                .build();
-    }
-
-    /**
-     * Returns: PathChain from the Follower's gate opening standby position to contact position.
-     * The Follower will have a -90 degrees heading in the field (heading towards the audience) at
-     * the gate contact position. The gate is expected to get opened and the artifacts will be
-     * released from the ramp.
-     */
-    public PathChain buildPaths_gatePosDw2Contact() {
-        return follower.pathBuilder()
-                .addPath(new BezierLine(followerPose.gatePoseDw, followerPose.gateContactDw))
-                .setLinearHeadingInterpolation(followerPose.gatePoseDw.getHeading(),
-                        followerPose.gateContactDw.getHeading())
+                .addPath(new BezierLine(followerPose.gatePose, followerPose.gateContact))
+                .setLinearHeadingInterpolation(followerPose.gatePose.getHeading(),
+                        followerPose.gateContact.getHeading())
                 .build();
     }
 
     /**
      * Returns: PathChain from the Follower's gate contact position to return to an intermediate
-     * position before proceeding to the scoring position. The Follower has a 90 degrees heading
-     * in the field (heading away from audience) at the gate contact position.
+     * position before proceeding to the scoring position.
      */
-    public PathChain buildPaths_gateContactUp2Return() {
+    public PathChain buildPaths_gateContact2Return() {
         return follower.pathBuilder()
-                .addPath(new BezierLine(followerPose.gateContactUp, followerPose.gateReturn))
-                .setLinearHeadingInterpolation(followerPose.gateContactUp.getHeading(),
-                        followerPose.gateReturn.getHeading())
-                .build();
-    }
-
-    /**
-     * Returns: PathChain from the Follower's gate contact position to return to an intermediate
-     * position before proceeding to the scoring position. The Follower has a -90 degrees heading
-     * in the field (heading towards the audience) at the gate contact position.
-     */
-    public PathChain buildPaths_gateContactDw2Return() {
-        return follower.pathBuilder()
-                .addPath(new BezierLine(followerPose.gateContactDw, followerPose.gateReturn))
-                .setLinearHeadingInterpolation(followerPose.gateContactDw.getHeading(),
+                .addPath(new BezierLine(followerPose.gateContact, followerPose.gateReturn))
+                .setLinearHeadingInterpolation(followerPose.gateContact.getHeading(),
                         followerPose.gateReturn.getHeading())
                 .build();
     }

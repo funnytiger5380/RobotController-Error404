@@ -29,13 +29,13 @@ public class FollowerPose {
     private double x_low_spike_line_start, y_low_spike_line_start, h_low_spike_line_start;
     private double x_low_spike_line_end, y_low_spike_line_end, h_low_spike_line_end;
     private double x_low_spike_line_return, y_low_spike_line_return, h_low_spike_line_return;
-    private double x_gate_pose, y_gate_pose, h_gate_pose_up, h_gate_pose_dw;
-    private double x_gate_contact, y_gate_contact, h_gate_contact_up, h_gate_contact_dw;
+    private double x_gate_pose, y_gate_pose, h_gate_pose;
+    private double x_gate_contact, y_gate_contact, h_gate_contact;
     private double x_gate_return, y_gate_return, h_gate_return;
 
-    public Pose startPose, startScorePose, scorePose, stopPose, highSpkPose, highSpkEnd, highSpkReturn,
-            midSpkPose, midSpkEnd, midSpkReturn, lowSpkPose, lowSpkEnd, lowSpkReturn,
-            gatePoseUp, gatePoseDw, gateContactUp, gateContactDw, gateReturn;
+    public Pose startPose, startScorePose, scorePose, stopPose,
+            highSpkPose, highSpkEnd, highSpkReturn, midSpkPose, midSpkEnd, midSpkReturn,
+            lowSpkPose, lowSpkEnd, lowSpkReturn, gatePose, gateContact, gateReturn;
 
     /** Set start position (x, y, heading): robot is over the score line, either touching the goal wall
      * or the field boundary.
@@ -73,13 +73,10 @@ public class FollowerPose {
     public void setLowSpkEnd(double x, double y, double h) { lowSpkEnd = new Pose(x, y, h); }
     public void setLowSpkReturn(double x, double y, double h) { lowSpkReturn = new Pose(x, y, h); }
 
-    /** Set the gate opening standby and contact positions to flex the gate open. The Follower can
-     * face plus or minus 90 degrees in the field at the positions with respect to the audience.
+    /** Set the gate opening standby, contact positions to flex the gate open.
      */
-    public void setGatePoseUp(double x, double y, double h) { gatePoseUp = new Pose(x, y, h); }
-    public void setGatePoseDw(double x, double y, double h) { gatePoseDw = new Pose(x, y, h); }
-    public void setGateContactUp(double x, double y, double h) { gateContactUp = new Pose(x, y, h); }
-    public void setGateContactDw(double x, double y, double h) { gateContactDw = new Pose(x, y, h); }
+    public void setGatePose(double x, double y, double h) { gatePose = new Pose(x, y, h); }
+    public void setGateContact(double x, double y, double h) { gateContact = new Pose(x, y, h); }
 
     /** Set the gate return position after the gate opening action is done, and before proceeding to
      * the next position.
@@ -174,15 +171,13 @@ public class FollowerPose {
 
         x_gate_pose = 19.0;
         y_gate_pose = 69.0;
-        h_gate_pose_up = 90.0;
-        h_gate_pose_dw = -90.0;
+        h_gate_pose = 180.0;
         x_gate_contact = 16.0;
         y_gate_contact = 69.0;
-        h_gate_contact_up = 90.0;
-        h_gate_contact_dw = -90.0;
+        h_gate_contact = 180.0;
         x_gate_return = 44.0;
         y_gate_return = 69.0;
-        h_gate_return = 20.0;
+        h_gate_return = 160.0;
 
         setAllPose(); // set all game usage positions ready
     }
@@ -250,15 +245,13 @@ public class FollowerPose {
 
         x_gate_pose = 125.0;
         y_gate_pose = 69.0;
-        h_gate_pose_up = 90.0;
-        h_gate_pose_dw = -90.0;
+        h_gate_pose = -12.0; // 0.0;
         x_gate_contact = 128.0;
         y_gate_contact = 69.0;
-        h_gate_contact_up = 90.0;
-        h_gate_contact_dw = -90.0;
+        h_gate_contact = -12.0; // 0.0;
         x_gate_return = 100.0;
         y_gate_return = 69.0;
-        h_gate_return = 160.0;
+        h_gate_return = 5.0; // 20.0;
 
         setAllPose(); // set all game usage positions ready
     }
@@ -283,10 +276,8 @@ public class FollowerPose {
         setLowSpkEnd(x_low_spike_line_end, y_low_spike_line_end, Math.toRadians(h_low_spike_line_end));
         setLowSpkReturn(x_low_spike_line_return, y_low_spike_line_return, Math.toRadians(h_low_spike_line_return));
 
-        setGatePoseUp(x_gate_pose, y_gate_pose, Math.toRadians(h_gate_pose_up));
-        setGatePoseDw(x_gate_pose, y_gate_pose, Math.toRadians(h_gate_pose_dw));
-        setGateContactUp(x_gate_contact, y_gate_contact, Math.toRadians(h_gate_contact_up));
-        setGateContactDw(x_gate_contact, y_gate_contact, Math.toRadians(h_gate_contact_dw));
+        setGatePose(x_gate_pose, y_gate_pose, Math.toRadians(h_gate_pose));
+        setGateContact(x_gate_contact, y_gate_contact, Math.toRadians(h_gate_contact));
         setGateReturn(x_gate_return, y_gate_return, Math.toRadians(h_gate_return));
     }
 

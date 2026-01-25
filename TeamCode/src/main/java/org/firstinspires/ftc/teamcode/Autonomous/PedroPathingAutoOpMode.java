@@ -33,9 +33,7 @@ public class PedroPathingAutoOpMode extends OpMode {
         HIGH_SPIKE_POSE, GRAB_HIGH_SPIKE, HIGH_SPIKE_RETURN_POSE,
         MID_SPIKE_POSE, GRAB_MID_SPIKE, MID_SPIKE_RETURN_POSE,
         LOW_SPIKE_POSE, GRAB_LOW_SPIKE, LOW_SPIKE_RETURN_POSE,
-        GATE_OPEN_UP_POSE, GATE_CONTACT_UP_POSE,
-        GATE_OPEN_DOWN_POSE, GATE_CONTACT_DOWN_POSE,
-        GATE_RETURN_POSE
+        GATE_OPEN_POSE, GATE_CONTACT_POSE, GATE_RETURN_POSE
     } PathState pathState;
     FollowerPathBuilder pathBuilder;
     boolean isHighSpikeGrabbed = false;
@@ -251,8 +249,6 @@ public class PedroPathingAutoOpMode extends OpMode {
                         followingPath(pathBuilder, FollowerPathBuilder::buildPaths_startPos2Score);
                         setPathState(PathState.SCORE_POSE);
                     } else if (isNextAction(FollowerAction.FAR_LAUNCH)) {
-                        intakeMotor.setIntakePanic();
-                        launcherWaitSeconds(INTAKE_PANIC_TIME);
                         intakeMotor.setIntakeOn();
                         followerPose.useFarScorePose();
                         followingPath(pathBuilder, FollowerPathBuilder::buildPaths_startPos2Score, PATH_SPEED_SLOW);
@@ -262,7 +258,7 @@ public class PedroPathingAutoOpMode extends OpMode {
                         setPathState(PathState.STOP_POSE);
                     } else if (isNextAction(FollowerAction.OPEN_GATE)) {
                         followingPath(pathBuilder, FollowerPathBuilder::buildPaths_startPos2Gate);
-                        setPathState(PathState.GATE_OPEN_UP_POSE);
+                        setPathState(PathState.GATE_OPEN_POSE);
                     } else if (isNextAction(FollowerAction.GRAB_HIGH_SPIKE)) {
                         followingPath(pathBuilder, FollowerPathBuilder::buildPaths_startPos2HighSpk);
                         setPathState(PathState.HIGH_SPIKE_POSE);
@@ -290,7 +286,7 @@ public class PedroPathingAutoOpMode extends OpMode {
                             setPathState(PathState.STOP_POSE);
                         } else if (isNextAction(FollowerAction.OPEN_GATE)) {
                             followingPath(pathBuilder, FollowerPathBuilder::buildPaths_scorePos2Gate);
-                            setPathState(PathState.GATE_OPEN_UP_POSE);
+                            setPathState(PathState.GATE_OPEN_POSE);
                         } else if (isNextAction(FollowerAction.GRAB_HIGH_SPIKE)) {
                             followingPath(pathBuilder, FollowerPathBuilder::buildPaths_scorePos2HighSpk);
                             setPathState(PathState.HIGH_SPIKE_POSE);
@@ -351,7 +347,7 @@ public class PedroPathingAutoOpMode extends OpMode {
                             setPathState(PathState.STOP_POSE);
                         } else if (isNextAction(FollowerAction.OPEN_GATE)) {
                             followingPath(pathBuilder, FollowerPathBuilder::buildPaths_highSpkEnd2Gate);
-                            setPathState(PathState.GATE_OPEN_UP_POSE);
+                            setPathState(PathState.GATE_OPEN_POSE);
                         }
                     }
                     break;
@@ -391,7 +387,7 @@ public class PedroPathingAutoOpMode extends OpMode {
                             setPathState(PathState.STOP_POSE);
                         } else if (isNextAction(FollowerAction.OPEN_GATE)) {
                             followingPath(pathBuilder, FollowerPathBuilder::buildPaths_midSpkEnd2Gate);
-                            setPathState(PathState.GATE_OPEN_DOWN_POSE);
+                            setPathState(PathState.GATE_OPEN_POSE);
                         }
                     }
                     break;
@@ -426,7 +422,7 @@ public class PedroPathingAutoOpMode extends OpMode {
                             setPathState(PathState.STOP_POSE);
                         } else if (isNextAction(FollowerAction.OPEN_GATE)) {
                             followingPath(pathBuilder, FollowerPathBuilder::buildPaths_lowSpkEnd2Gate);
-                            setPathState(PathState.GATE_OPEN_DOWN_POSE);
+                            setPathState(PathState.GATE_OPEN_POSE);
                         }
                     }
                     break;
@@ -438,30 +434,16 @@ public class PedroPathingAutoOpMode extends OpMode {
                     }
                     break;
 
-                case GATE_OPEN_UP_POSE:
+                case GATE_OPEN_POSE:
                     if (!follower.isBusy()) {
-                        followingPath(pathBuilder, FollowerPathBuilder::buildPaths_gatePosUp2Contact, GATE_SPEED);
-                        setPathState(PathState.GATE_CONTACT_UP_POSE);
+                        followingPath(pathBuilder, FollowerPathBuilder::buildPaths_gatePos2Contact, GATE_SPEED);
+                        setPathState(PathState.GATE_CONTACT_POSE);
                     }
                     break;
 
-                case GATE_OPEN_DOWN_POSE:
+                case GATE_CONTACT_POSE:
                     if (!follower.isBusy()) {
-                        followingPath(pathBuilder, FollowerPathBuilder::buildPaths_gatePosDw2Contact, GATE_SPEED);
-                        setPathState(PathState.GATE_CONTACT_DOWN_POSE);
-                    }
-                    break;
-
-                case GATE_CONTACT_UP_POSE:
-                    if (!follower.isBusy()) {
-                        followingPath(pathBuilder, FollowerPathBuilder::buildPaths_gateContactUp2Return);
-                        setPathState(PathState.GATE_RETURN_POSE);
-                    }
-                    break;
-
-                case GATE_CONTACT_DOWN_POSE:
-                    if (!follower.isBusy()) {
-                        followingPath(pathBuilder, FollowerPathBuilder::buildPaths_gateContactDw2Return);
+                        followingPath(pathBuilder, FollowerPathBuilder::buildPaths_gateContact2Return);
                         setPathState(PathState.GATE_RETURN_POSE);
                     }
                     break;
