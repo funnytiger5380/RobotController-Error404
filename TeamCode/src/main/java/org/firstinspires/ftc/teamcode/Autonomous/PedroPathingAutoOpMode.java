@@ -86,8 +86,8 @@ public class PedroPathingAutoOpMode extends OpMode {
     // Drivetrain constants
     double PATH_SPEED_NORMAL = 0.90;
     double PATH_SPEED_SLOW = 0.70;
-    double GRAB_SPEED = 0.50;
-    double GATE_SPEED = 0.50;
+    double GRAB_SPEED = 0.40;
+    double GATE_SPEED = 0.40;
 
     // Intake motor constants
     double INTAKE_POWER = 0.75;
@@ -101,7 +101,7 @@ public class PedroPathingAutoOpMode extends OpMode {
 
     double FAR_LAUNCH_TARGET_VELOCITY = 1580;
     double FAR_LAUNCH_MIN_VELOCITY = 1560;
-    double FAR_LAUNCH_INTERVAL_SECONDS = 1.0;
+    double FAR_LAUNCH_INTERVAL_SECONDS = 0.60;
 
     double FEEDER_RUN_SECONDS = 0.10;
     double FEEDER_PANIC_INTERVAL = 0.10 + FEEDER_RUN_SECONDS;
@@ -124,14 +124,24 @@ public class PedroPathingAutoOpMode extends OpMode {
         followerPose = useRedPose ? new FollowerPose("red") : new FollowerPose("blue");
         pathBuilder = new FollowerPathBuilder(follower, followerPose);
 
-        if (useFarStartPose) // use far start pose if configured
+        if (useFarStartPose) { // use far start pose
             followerPose.useFarStartPose();
-        else
+            if (useRedPose) {
+                followerPose.setMidSpkPose(90.0, 63.0, Math.toRadians(-12.0));
+                followerPose.setMidSpkEnd(123.0, 61.0, Math.toRadians(-17.0));
+                followerPose.setStopPose(100, 80, 0.0);
+            }
+        } else { // use close start pose
             followerPose.useCloseStartPose();
+            if (useRedPose) {
+                followerPose.setLowSpkPose(77.0, 42.0, Math.toRadians(-12.0));
+                followerPose.setLowSpkEnd(117.0, 39.0, Math.toRadians(-17.0));
+            }
+        }
 
-        if (useFarStopPose) // use far stop pose if configured
+        if (useFarStopPose) // use far stop pose
             followerPose.useFarStopPose();
-        else
+        else // use close stop pose
             followerPose.useCloseStopPose();
 
         follower.setStartingPose(followerPose.startPose);
