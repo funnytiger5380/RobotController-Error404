@@ -505,8 +505,8 @@ public class PedroPathingAutoOpMode extends OpMode {
         return nextAction == action;
     }
 
-    void followingPath(FollowerPathBuilder pb, Function<FollowerPathBuilder, PathChain> buildPath,
-                       double pathSpeed) {
+    void followingPath(FollowerPathBuilder pb,
+                       Function<FollowerPathBuilder, PathChain> buildPath, double pathSpeed) {
         follower.followPath(buildPath.apply(pb), pathSpeed, true);
     }
 
@@ -519,12 +519,12 @@ public class PedroPathingAutoOpMode extends OpMode {
 
         if (isBallDetected) {
             if (!indicateDetected) {
-                indicateDetected = true; // update indicator light
+                indicateDetected = true;
                 indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.GREEN);
             }
         } else {
             if (indicateDetected) {
-                indicateDetected = false; // update indicator light
+                indicateDetected = false;
                 indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.RED);
             }
         }
@@ -559,7 +559,6 @@ public class PedroPathingAutoOpMode extends OpMode {
         launchCount = 0;
 
         launcher.launcherOnAtIdle(); // keep launcher on between consecutive launches
-
         for (int i = 0; i < count; i++) {
             if (!isBallDetected) {
                 panicCount++;
@@ -568,15 +567,16 @@ public class PedroPathingAutoOpMode extends OpMode {
             if (isBallDetected) {
                 launchCount++;
                 launcher.launchCloseShot();
-
                 if (launchCount < count) {
                     launcherWaitSeconds(interval); // interval between launches
                 }
+            } else if ((launchCount == 0) && (panicCount > 1)) {
+                launcher.launcherOffAtIdle();
+                return; // if no ball detected after consecutive launcherPanic, set launcher off
             }
         }
 
         launcher.launcherOffAtIdle(); // set launcher off after next launch
-
         if (launchCount < count) {
             if (!isBallDetected) {
                 panicCount++;
@@ -594,7 +594,6 @@ public class PedroPathingAutoOpMode extends OpMode {
         launchCount = 0;
 
         launcher.launcherOnAtIdle(); // keep launcher on between consecutive launches
-
         for (int i = 0; i < count; i++) {
             if (!isBallDetected) {
                 panicCount++;
@@ -603,15 +602,16 @@ public class PedroPathingAutoOpMode extends OpMode {
             if (isBallDetected) {
                 launchCount++;
                 launcher.launchFarShot();
-
                 if (launchCount < count) {
                     launcherWaitSeconds(interval); // interval between launches
                 }
+            } else if ((launchCount == 0) && (panicCount > 1)) {
+                launcher.launcherOffAtIdle();
+                return; // if no ball detected after consecutive launcherPanic, set launcher off
             }
         }
 
         launcher.launcherOffAtIdle(); // set launcher off after next launch
-
         if (launchCount < count) {
             if (!isBallDetected) {
                 panicCount++;
