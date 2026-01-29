@@ -1,12 +1,14 @@
 package org.firstinspires.ftc.teamcode.TeleOp;
 
 import com.pedropathing.telemetry.SelectableOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 /**
  * This is the SelectableTeleOp class. It contains a selection menu for various PedroPathingTeleOp
  * OpModes.
  */
+@Disabled
 @TeleOp(name = "SelectableTeleOp", group = "Error404")
 public class SelectableTeleOp extends SelectableOpMode {
 
