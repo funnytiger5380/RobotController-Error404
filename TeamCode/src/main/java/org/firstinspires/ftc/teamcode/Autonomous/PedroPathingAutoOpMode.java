@@ -129,13 +129,15 @@ public class PedroPathingAutoOpMode extends OpMode {
             if (useRedPose) {
                 followerPose.setMidSpkPose(90.0, 63.0, Math.toRadians(-12.0));
                 followerPose.setMidSpkEnd(123.0, 61.0, Math.toRadians(-17.0));
-                followerPose.setStopPose(100, 80, 0.0);
+                followerPose.setStopPose(130.0, 75.0, Math.toRadians(-12.0));
             }
         } else { // use close start pose
             followerPose.useCloseStartPose();
             if (useRedPose) {
                 followerPose.setLowSpkPose(77.0, 42.0, Math.toRadians(-12.0));
-                followerPose.setLowSpkEnd(117.0, 39.0, Math.toRadians(-17.0));
+                followerPose.setLowSpkEnd(107.0, 39.0, Math.toRadians(-17.0));
+            } else {
+                followerPose.setMidSpkPose(44.0, 61.5, Math.toRadians(180.0));
             }
         }
 
@@ -385,6 +387,8 @@ public class PedroPathingAutoOpMode extends OpMode {
                             }
                         } else if (isNextAction(FollowerAction.FAR_LAUNCH)) {
                             followerPose.useFarScorePose();
+                            if (!useRedPose)
+                                followerPose.setScorePose(56.0, 15.0, Math.toRadians(126.0));
                             if (isLowSpikeGrabbed) {
                                 followingPath(pathBuilder, FollowerPathBuilder::buildPaths_midSpkEnd2Score);
                                 setPathState(PathState.SCORE_POSE);
