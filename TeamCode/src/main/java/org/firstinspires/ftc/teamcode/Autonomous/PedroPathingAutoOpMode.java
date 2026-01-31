@@ -126,16 +126,20 @@ public class PedroPathingAutoOpMode extends OpMode {
 
         if (useFarStartPose) { // use far start pose
             followerPose.useFarStartPose();
-            if (useRedPose) {
+            if (useRedPose) { // red far
                 followerPose.setMidSpkPose(90.0, 63.0, Math.toRadians(-12.0));
                 followerPose.setMidSpkEnd(123.0, 61.0, Math.toRadians(-17.0));
-                followerPose.setStopPose(100, 80, 0.0);
+                followerPose.setStopPose(100.0, 75.0, Math.toRadians(-10.0));
+            }
+            else { // blue far
+                followerPose.setMidSpkPose(44.0, 63.0, Math.toRadians(180.0));
+                followerPose.setMidSpkEnd(19.0, 63.0, Math.toRadians(180.0));
             }
         } else { // use close start pose
             followerPose.useCloseStartPose();
-            if (useRedPose) {
-                followerPose.setLowSpkPose(77.0, 42.0, Math.toRadians(-12.0));
-                followerPose.setLowSpkEnd(117.0, 39.0, Math.toRadians(-17.0));
+            if (useRedPose) { // red close
+                followerPose.setLowSpkPose(77.0, 42.5, Math.toRadians(-12.0));
+                followerPose.setLowSpkEnd(107.0, 39.5, Math.toRadians(-17.0));
             }
         }
 
@@ -385,6 +389,11 @@ public class PedroPathingAutoOpMode extends OpMode {
                             }
                         } else if (isNextAction(FollowerAction.FAR_LAUNCH)) {
                             followerPose.useFarScorePose();
+                            if (!useRedPose) // blue
+                                followerPose.setScorePose(56.0, 15.0, Math.toRadians(127.0));
+                            else // red
+                                followerPose.setScorePose(88.0, 15.0, Math.toRadians(64.0)); // 65.0
+
                             if (isLowSpikeGrabbed) {
                                 followingPath(pathBuilder, FollowerPathBuilder::buildPaths_midSpkEnd2Score);
                                 setPathState(PathState.SCORE_POSE);
