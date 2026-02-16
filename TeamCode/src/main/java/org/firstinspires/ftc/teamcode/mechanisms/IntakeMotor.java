@@ -27,7 +27,7 @@ public class IntakeMotor {
     private double motorPower = 0.75;
 
     private final ElapsedTime timer = new ElapsedTime();
-    private double panicTime = 0.10;
+    private double panicTime = 0.05;
     private double maxTime = 0.20;
 
     private volatile boolean isBusy = false;

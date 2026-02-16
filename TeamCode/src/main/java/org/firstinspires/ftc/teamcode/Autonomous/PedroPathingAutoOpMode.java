@@ -99,8 +99,8 @@ public class PedroPathingAutoOpMode extends OpMode {
     double CLOSE_LAUNCH_MIN_VELOCITY = 1260;
     double CLOSE_LAUNCH_INTERVAL_SECONDS = 0.50;
 
-    double FAR_LAUNCH_TARGET_VELOCITY = 1580;
-    double FAR_LAUNCH_MIN_VELOCITY = 1560;
+    double FAR_LAUNCH_TARGET_VELOCITY = 1600;
+    double FAR_LAUNCH_MIN_VELOCITY = 1580;
     double FAR_LAUNCH_INTERVAL_SECONDS = 0.60;
 
     double FEEDER_RUN_SECONDS = 0.10;
