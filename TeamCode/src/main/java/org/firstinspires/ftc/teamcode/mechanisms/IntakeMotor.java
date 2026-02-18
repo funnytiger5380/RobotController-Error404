@@ -190,8 +190,6 @@ public class IntakeMotor {
                     isPanic = false;
                     intakeState = IntakeState.OFF;
                     intakeMotor.setPower(0.0);
-                } else if (panic) {
-                    timer.reset();
                 } else if (timer.seconds() >= panicTime) {
                     isPanic = false;
                     timer.reset();
