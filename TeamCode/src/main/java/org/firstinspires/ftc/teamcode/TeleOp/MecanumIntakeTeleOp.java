@@ -16,25 +16,9 @@ import org.firstinspires.ftc.teamcode.mechanisms.IntakeMotor;
 import org.firstinspires.ftc.teamcode.mechanisms.Launcher;
 import org.firstinspires.ftc.teamcode.mechanisms.MecanumDrive;
 
-/**
- * TeleOp program for an FTC robot with:
- *  - Four-motor Mecanum wheel drivetrain
- *  - One launcher motor using velocity control
- *  - Two feeder CRServos
- *  - Intake motor
- * CONTROLS:
- *  Left stick Y = forward/backward (up = forward, down = backward)
- *  Left stick X = strafe (left = left, right = right)
- *  Right stick X = rotate (left = CCW, right = CW)
- *  Right bumper = launcher to fire one close shot
- *  Right trigger = launcher to fire one far shot
- *  Left bumper  = intake forward
- *  Left trigger = intake stop
- *  D-pad Left   = intake reverse
- */
-
-@TeleOp (name = "MecanumIntakeTeleOp", group = "Error404")
+@TeleOp(name = "MecanumIntakeTeleOp", group = "Error404")
 public class MecanumIntakeTeleOp extends OpMode {
+
     double DRIVE_MAX_POWER = 1.0;
     double DRIVE_MAX_FORWARD_SPEED = 1.0;
     double DRIVE_MAX_ANGULAR_SPEED = 0.7;
@@ -55,7 +39,9 @@ public class MecanumIntakeTeleOp extends OpMode {
     double LAUNCH_COOL_OFF_SECONDS = 0.20;
     double LAUNCH_ON_SECOND_AT_IDLE = 2.0;
 
-    // === Drivetrain motors ===
+    private final ElapsedTime intakePanicTimer = new ElapsedTime();
+    private boolean intakePanicActive = false;
+
     private final MecanumDrive mecanumDrive = new MecanumDrive()
             .leftFrontName("left_drive_front")
             .leftBackName("left_drive_back")
@@ -67,13 +53,11 @@ public class MecanumIntakeTeleOp extends OpMode {
             .rightBackDirection(FORWARD)
             .useBrakeMode(true);
 
-    // === Intake ===
     private final IntakeMotor intakeMotor = new IntakeMotor()
             .motorName("intake")
             .motorUseBrakeMode(true)
             .motorDirection(REVERSE);
 
-    // === Launcher and feeders ===
     private final Launcher launcher = new Launcher()
             .launcherName("launcher")
             .launcherUseBrakeMode(true)
@@ -83,45 +67,45 @@ public class MecanumIntakeTeleOp extends OpMode {
             .leftFeederDirection(FORWARD)
             .rightFeederDirection(REVERSE);
 
-    // === Indicator light ===
     private final IndicatorLight indicatorLight = new IndicatorLight()
             .indicatorName("indicator_light");
+
     private boolean indicateDetected = false;
 
-    // === Ball sensor ===
     private final DigitalSensor leftBallSensor = new DigitalSensor()
             .sensorName("left_ball_sensor")
             .sensorMode(DigitalChannel.Mode.INPUT);
+
     private final DigitalSensor rightBallSensor = new DigitalSensor()
             .sensorName("right_ball_sensor")
             .sensorMode(DigitalChannel.Mode.INPUT);
-    private final ElapsedTime sensorTime = new ElapsedTime();
 
-    // === Run timer & Misc. ===
+    private final ElapsedTime sensorTime = new ElapsedTime();
     private final ElapsedTime runTime = new ElapsedTime();
+
     private enum Alliance { BLUE, RED, NONE }
     private Alliance alliance = Alliance.NONE;
+
     private boolean isAlmostEndGame = false;
     private boolean isIMURequested = false;
     private double driveHeadingOffset = 0.0;
 
     @Override
     public void init() {
-        /* === Drivetrain setup === */
+
         mecanumDrive.build(hardwareMap);
         mecanumDrive.setMaxPower(DRIVE_MAX_POWER);
 
-        /* === IMU setup === */
-        mecanumDrive.initRevIMU(hardwareMap,
+        mecanumDrive.initRevIMU(
+                hardwareMap,
                 RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
-                RevHubOrientationOnRobot.UsbFacingDirection.UP);
+                RevHubOrientationOnRobot.UsbFacingDirection.UP
+        );
 
-        /* === Intake setup === */
         intakeMotor.build(hardwareMap);
         intakeMotor.setPower(INTAKE_POWER);
         intakeMotor.setPanicTime(INTAKE_PANIC_TIME);
 
-        /* === Launcher setup === */
         launcher.build(hardwareMap);
         launcher.launcherOnAtIdle();
         launcher.setLauncherReadyVelocity(SUPER_CLOSE_LAUNCH_TARGET_VELOCITY);
@@ -132,16 +116,15 @@ public class MecanumIntakeTeleOp extends OpMode {
         launcher.setFeederRunSec(FEEDER_RUN_SECONDS);
         launcher.setPanicRunSec(FEEDER_PANIC_SECONDS);
 
-        /* === Indicator light === */
         indicatorLight.build(hardwareMap);
 
-        /* === Digital sensor === */
         leftBallSensor.build(hardwareMap);
         rightBallSensor.build(hardwareMap);
     }
 
     @Override
     public void init_loop() {
+
         if (gamepad1.xWasPressed())
             alliance = Alliance.BLUE;
         else if (gamepad1.circleWasPressed())
@@ -161,42 +144,40 @@ public class MecanumIntakeTeleOp extends OpMode {
             driveHeadingOffset = 0.0;
         }
 
-        telemetry.addData("Alliance", "Press Square/Circle button to select Blue/Red team\n");
-        telemetry.addData("Use RevIMU", "Press Triangle/Cross button to choose Field/Robot Orientation\n");
-        telemetry.addLine();
-        telemetry.addLine("------------");
         telemetry.addData("Alliance Team", alliance.toString());
-        telemetry.addData("Use Orientation", isIMURequested ? "Field centric" : "Robot centric");
+        telemetry.addData("Use Orientation",
+                isIMURequested ? "Field centric" : "Robot centric");
         telemetry.addData("Robot Heading Offset", driveHeadingOffset);
         telemetry.update();
     }
 
     @Override
     public void start() {
+
         if (!isIMURequested)
             mecanumDrive.resetDriveYaw();
 
         mecanumDrive.setDriveAngularOffset(driveHeadingOffset);
         mecanumDrive.restartDrives();
+
         runTime.reset();
         sensorTime.reset();
     }
 
     @Override
     public void loop() {
+
         if (runTime.seconds() > 120.0) {
             intakeMotor.setIntakeOff();
             launcher.setLauncherOff();
-            indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.OFF);
+            indicatorLight.setIndicatorColor(
+                    IndicatorLight.IndicatorColor.OFF
+            );
             terminateOpModeNow();
-        } else if (runTime.seconds() > 113.0 && !isAlmostEndGame) {
-            gamepad1.rumbleBlips(2);
-            isAlmostEndGame = true;
         }
 
-        // === Drive Control ===
         double forward = -gamepad1.left_stick_y * DRIVE_MAX_FORWARD_SPEED;
-        double strafe  = gamepad1.left_stick_x  * DRIVE_MAX_FORWARD_SPEED;
+        double strafe  = gamepad1.left_stick_x * DRIVE_MAX_FORWARD_SPEED;
         double rotate  = gamepad1.right_stick_x * DRIVE_MAX_ANGULAR_SPEED;
 
         if (!isIMURequested)
@@ -204,25 +185,41 @@ public class MecanumIntakeTeleOp extends OpMode {
         else
             mecanumDrive.runDriveFieldRelative(forward, strafe, rotate);
 
-        // === Intake Motor ===
-        boolean intakeOn    = gamepad1.left_bumper;
-        boolean intakeOff   = gamepad1.left_trigger > 0.5;
-        boolean intakePanic = gamepad1.dpad_left;
+        boolean intakeOn = gamepad1.left_bumper;
+        boolean intakeOff = gamepad1.left_trigger > 0.5;
+        boolean panicButton = gamepad1.dpad_left;
 
-        intakeMotor.run(intakeOn, intakeOff, intakePanic);
+        if (panicButton && !intakePanicActive) {
+            intakePanicActive = true;
+            intakePanicTimer.reset();
+        }
 
-        // === Ball sensor and Indicator light ===
-        boolean isBallDetected = leftBallSensor.isDetected() || rightBallSensor.isDetected();
+        if (intakePanicActive) {
+            intakeMotor.setIntakePanic();
+
+            if (intakePanicTimer.seconds() >= INTAKE_PANIC_TIME)
+                intakePanicActive = false;
+        } else {
+            intakeMotor.run(intakeOn, intakeOff, false);
+        }
+
+        boolean isBallDetected =
+                leftBallSensor.isDetected() ||
+                        rightBallSensor.isDetected();
 
         if (isBallDetected) {
             if (!indicateDetected) {
                 indicateDetected = true;
-                indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.GREEN);
+                indicatorLight.setIndicatorColor(
+                        IndicatorLight.IndicatorColor.GREEN
+                );
             }
         } else {
             if (indicateDetected) {
                 indicateDetected = false;
-                indicatorLight.setIndicatorColor(IndicatorLight.IndicatorColor.RED);
+                indicatorLight.setIndicatorColor(
+                        IndicatorLight.IndicatorColor.RED
+                );
             }
         }
 
@@ -245,18 +242,8 @@ public class MecanumIntakeTeleOp extends OpMode {
 
         launcher.launch(closeShot, farShot, launchReady, launchPanic);
 
-        // === Status Output ===
-        telemetry.addData("Alliance Team", alliance.toString());
-        telemetry.addData("Use Orientation", isIMURequested ? "Field centric" : "Robot centric");
-        telemetry.addData("Run Time", runTime.toString());
-        telemetry.addData("Front Motor Power", "left (%.2f), right (%.2f)", mecanumDrive.getLeftPowerFront(), mecanumDrive.getRightPowerFront());
-        telemetry.addData("Back Motor Power", "left (%.2f), right (%.2f)", mecanumDrive.getLeftPowerBack(), mecanumDrive.getRightPowerBack());
-        telemetry.addData("Launcher State", launcher.getState());
-        telemetry.addData("Launcher Speed", launcher.getLauncherVelocity());
         telemetry.addData("Intake State", intakeMotor.getState());
-        telemetry.addData("Intake Direction", intakeMotor.getMotorDirection());
         telemetry.addData("Intake Power", intakeMotor.getPower());
-        telemetry.addData("Robot Heading", mecanumDrive.getDriveHeading(AngleUnit.DEGREES));
         telemetry.update();
     }
 }

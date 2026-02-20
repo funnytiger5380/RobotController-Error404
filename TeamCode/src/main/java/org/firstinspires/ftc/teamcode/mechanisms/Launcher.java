@@ -39,8 +39,7 @@ public class Launcher {
     private double launcherCoolOffSec = 0.20;
     private double launcherOnSecAtIdle = 2.0;
 
-    // === Launcher state machine ===
-    private enum LaunchState { IDLE, PANIC, SPIN_UP_F, SPIN_UP_C, LAUNCH, LAUNCHING, COOL_OFF }
+    private enum LaunchState { IDLE, PANIC, SPIN_UP_F, SPIN_UP_C, LAUNCH, LAUNCHING, RETRACT, COOL_OFF }
     private LaunchState launchState = LaunchState.IDLE;
     private boolean launcherOnAtIdle = false;
     private volatile boolean isBusy = false;
@@ -163,7 +162,7 @@ public class Launcher {
 
         launcherOnAtIdle(); // set to keep launcher fly wheel on between multiple launches
         for (int i = count; i > 0; i--) {
-            if (i == 1) { // set to launcher fly wheel off after the last launch
+            if (i == 1) {
                 launcherOffAtIdle();
                 launchCloseShot();
             } else {
@@ -185,7 +184,7 @@ public class Launcher {
 
         launcherOnAtIdle(); // set to keep launcher fly wheel on between multiple launches
         for (int i = count; i > 0; i--) {
-            if (i == 1) { // set to launcher fly wheel off after the last launch
+            if (i == 1) {
                 launcherOffAtIdle();
                 launchFarShot();
             } else {
