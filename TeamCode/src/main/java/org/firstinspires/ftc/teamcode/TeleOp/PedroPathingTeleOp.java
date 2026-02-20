@@ -85,14 +85,18 @@ public class PedroPathingTeleOp extends OpMode {
     double INTAKE_PANIC_TIME = 0.10;
 
     // Launcher constants
-    double ClOSE_LAUNCH_TARGET_VELOCITY = 1300;
-    double CLOSE_LAUNCH_MIN_VELOCITY    = 1280;
+    double SUPER_CLOSE_LAUNCH_TARGET_VELOCITY = 1200;
+    double SUPER_CLOSE_LAUNCH_MIN_VELOCITY    = 1190;
+    double CLOSE_LAUNCH_TARGET_VELOCITY = 1300;
+    double CLOSE_LAUNCH_MIN_VELOCITY    = 1290;
     double FAR_LAUNCH_TARGET_VELOCITY   = 1600;
-    double FAR_LAUNCH_MIN_VELOCITY      = 1580;
+    double FAR_LAUNCH_MIN_VELOCITY      = 1590;
 
-    double FEEDER_RUN_SECONDS = 0.10;
-    double FEEDER_PANIC_INTERVAL = 0.10 + FEEDER_RUN_SECONDS;
+    double FEEDER_RUN_SECONDS = 0.15;
+    double FEEDER_PANIC_SECONDS = 0.10;
+    double FEEDER_PANIC_INTERVAL = FEEDER_PANIC_SECONDS + 0.10;
     double LAUNCH_COOL_OFF_SECONDS = 0.20;
+    double LAUNCH_ON_SECOND_AT_IDLE = 2.1;
 
     // OpMode timer
     Timer runTime = new Timer();
@@ -122,11 +126,14 @@ public class PedroPathingTeleOp extends OpMode {
 
         // Initialize launcher and feeders
         launcher.build(hardwareMap);
-        launcher.launcherOffAtIdle();
-        launcher.setLauncherCloseVelocity(ClOSE_LAUNCH_TARGET_VELOCITY, CLOSE_LAUNCH_MIN_VELOCITY);
+        launcher.launcherOnAtIdle();
+        launcher.setLauncherReadyVelocity(SUPER_CLOSE_LAUNCH_TARGET_VELOCITY);
+        launcher.setLauncherCloseVelocity(CLOSE_LAUNCH_TARGET_VELOCITY, CLOSE_LAUNCH_MIN_VELOCITY);
         launcher.setLauncherFarVelocity(FAR_LAUNCH_TARGET_VELOCITY, FAR_LAUNCH_MIN_VELOCITY);
         launcher.setLauncherCoolOffSec(LAUNCH_COOL_OFF_SECONDS);
+        launcher.setLauncherOnSecAtIdle(LAUNCH_ON_SECOND_AT_IDLE);
         launcher.setFeederRunSec(FEEDER_RUN_SECONDS);
+        launcher.setPanicRunSec(FEEDER_PANIC_SECONDS);
 
         // Initialize indicator light
         indicatorLight.build(hardwareMap);
@@ -184,6 +191,13 @@ public class PedroPathingTeleOp extends OpMode {
             isAlmostEndGame = true;
         }
 
+        // === Intake Motor ===
+        boolean intakeOn    = gamepad1.dpad_up;
+        boolean intakeOff   = gamepad1.dpad_down;
+        boolean intakePanic = gamepad1.dpad_left;
+
+        intakeMotor.run(intakeOn, intakeOff, intakePanic);
+
         // === Ball sensor and Indicator light ===
         boolean isBallDetected = leftBallSensor.isDetected() || rightBallSensor.isDetected();
 
@@ -211,22 +225,24 @@ public class PedroPathingTeleOp extends OpMode {
             motorPower[i] = motors.get(i).getPower();
         }
 
-        // === Intake Motor ===
-        boolean intakeOn    = gamepad1.left_bumper;
-        boolean intakeOff   = gamepad1.left_trigger > 0.5;
-        boolean intakePanic = gamepad1.dpad_left;
-
-        intakeMotor.run(intakeOn, intakeOff, intakePanic);
-
         // === Launcher ===
-        boolean closeShot   = gamepad1.right_bumper;
+        boolean superCloseShot  = gamepad1.circleWasPressed();
+        boolean normalCloseShot = gamepad1.right_bumper;
         boolean farShot     = gamepad1.right_trigger > 0.5;
+        boolean launchReady = gamepad1.left_bumper || gamepad1.left_trigger > 0.5 ||
+                                gamepad2.left_bumper || gamepad2.left_trigger > 0.5;
         boolean launchPanic = intakeMotor.isBusy() && isBallDetected &&
                                 (sensorTime.getElapsedTimeSeconds() > FEEDER_PANIC_INTERVAL);
 
         if (launchPanic)
             sensorTime.resetTimer();
-        launcher.launch(closeShot, farShot, launchPanic);
+
+        if (superCloseShot)
+            launcher.setLauncherCloseVelocity(SUPER_CLOSE_LAUNCH_TARGET_VELOCITY, SUPER_CLOSE_LAUNCH_MIN_VELOCITY);
+        else if (normalCloseShot)
+            launcher.setLauncherCloseVelocity(CLOSE_LAUNCH_TARGET_VELOCITY, CLOSE_LAUNCH_MIN_VELOCITY);
+
+        launcher.launch(superCloseShot || normalCloseShot, farShot, launchReady, launchPanic);
 
         // Log to telemetry for debugging
         telemetry.addData("Alliance Team", alliance.toString());

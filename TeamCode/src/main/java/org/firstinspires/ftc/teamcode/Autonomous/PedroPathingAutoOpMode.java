@@ -92,20 +92,22 @@ public class PedroPathingAutoOpMode extends OpMode {
     // Intake motor constants
     double INTAKE_POWER = 0.75;
     double INTAKE_PANIC_TIME = 0.10;
-    double INTAKE_PANIC_WAIT = 0.80;
+    double INTAKE_PANIC_WAIT = 0.40;
 
     // Launcher constants
-    double ClOSE_LAUNCH_TARGET_VELOCITY = 1280;
-    double CLOSE_LAUNCH_MIN_VELOCITY = 1260;
-    double CLOSE_LAUNCH_INTERVAL_SECONDS = 0.50;
+    double CLOSE_LAUNCH_TARGET_VELOCITY = 1300;
+    double CLOSE_LAUNCH_MIN_VELOCITY = 1290;
+    double CLOSE_LAUNCH_INTERVAL_SECONDS = 0.20;
 
     double FAR_LAUNCH_TARGET_VELOCITY = 1600;
-    double FAR_LAUNCH_MIN_VELOCITY = 1580;
-    double FAR_LAUNCH_INTERVAL_SECONDS = 0.60;
+    double FAR_LAUNCH_MIN_VELOCITY = 1590;
+    double FAR_LAUNCH_INTERVAL_SECONDS = 0.30;
 
-    double FEEDER_RUN_SECONDS = 0.10;
-    double FEEDER_PANIC_INTERVAL = 0.10 + FEEDER_RUN_SECONDS;
+    double FEEDER_RUN_SECONDS = 0.15;
+    double FEEDER_PANIC_SECONDS = 0.10;
+    double FEEDER_PANIC_INTERVAL = FEEDER_PANIC_SECONDS + 0.10;
     double LAUNCH_COOL_OFF_SECONDS = 0.20;
+    double LAUNCH_ON_SECOND_AT_IDLE = 2.0;
 
     // OpMode timers
     Timer runTime = new Timer();
@@ -159,10 +161,12 @@ public class PedroPathingAutoOpMode extends OpMode {
         // Initialize launcher and feeders
         launcher.build(hardwareMap);
         launcher.launcherOffAtIdle();
-        launcher.setLauncherCloseVelocity(ClOSE_LAUNCH_TARGET_VELOCITY, CLOSE_LAUNCH_MIN_VELOCITY);
+        launcher.setLauncherCloseVelocity(CLOSE_LAUNCH_TARGET_VELOCITY, CLOSE_LAUNCH_MIN_VELOCITY);
         launcher.setLauncherFarVelocity(FAR_LAUNCH_TARGET_VELOCITY, FAR_LAUNCH_MIN_VELOCITY);
         launcher.setLauncherCoolOffSec(LAUNCH_COOL_OFF_SECONDS);
+        launcher.setLauncherOnSecAtIdle(LAUNCH_ON_SECOND_AT_IDLE);
         launcher.setFeederRunSec(FEEDER_RUN_SECONDS);
+        launcher.setPanicRunSec(FEEDER_PANIC_SECONDS);
 
         // Initialize Digital sensor
         leftBallSensor.build(hardwareMap);
@@ -227,16 +231,17 @@ public class PedroPathingAutoOpMode extends OpMode {
         currentPose = follower.getPose(); // the follower current pose
 
         // Log to telemetry for debugging
-        telemetry.addData("RunTime", "(%.4fs)", runTime.getElapsedTimeSeconds());
+        telemetry.addData("Run Time", "(%.4fs)", runTime.getElapsedTimeSeconds());
         telemetry.addData("Current Pose", "x(%.4f), y(%.4f), h(%.4f)",
                 currentPose.getX(), currentPose.getY(), Math.toDegrees(currentPose.getHeading()));
         telemetry.addData("Current Action", isNextAction(null) ? "None": nextAction.toString());
         telemetry.addLine("Follower action sequence remaining:");
         telemetry.addLine(followerSelectedAction.getActionLines());
-        telemetry.addData("PathState", pathState.toString());
-        telemetry.addData("PathTimer", pathTimer.getElapsedTimeSeconds());
-        telemetry.addData("LaunchCount", launchCount);
-        telemetry.addData("PanicCount", panicCount);
+        telemetry.addData("Path State", pathState.toString());
+        telemetry.addData("Path Time", pathTimer.getElapsedTimeSeconds());
+        telemetry.addData("Path Completion", "x(%.2%)", follower.getPathCompletion());
+        telemetry.addData("Launch Count", launchCount);
+        telemetry.addData("Panic Count", panicCount);
         telemetry.update();
     }
 
@@ -543,7 +548,7 @@ public class PedroPathingAutoOpMode extends OpMode {
         if (isBallDetected) {
             if (intakeMotor.isBusy() && (sensorTimer.getElapsedTimeSeconds() > interval)) {
                 if (!launcher.isBusy()) { // only set launcher panic if it is not busy
-                    launcher.launch(false, false, true);
+                    launcher.launch(false, false, false, true);
                 }
                 sensorTimer.resetTimer();
             }
@@ -568,6 +573,7 @@ public class PedroPathingAutoOpMode extends OpMode {
         launchCount = 0;
 
         launcher.launcherOnAtIdle(); // keep launcher on between consecutive launches
+        checkBallDetected();
         for (int i = 0; i < count; i++) {
             if (!isBallDetected) {
                 panicCount++;
@@ -585,17 +591,17 @@ public class PedroPathingAutoOpMode extends OpMode {
             }
         }
 
-        launcher.launcherOffAtIdle(); // set launcher off after next launch
         if (launchCount < count) {
             if (!isBallDetected) {
                 panicCount++;
                 launcherPanic();
             }
-            launchCount++;
-            launcher.launchCloseShot(); // last launch if still have ball
-        } else {
-            launcher.setLauncherOff();
+            if (isBallDetected) {
+                launchCount++;
+                launcher.launchCloseShot(); // last launch if still have ball
+            }
         }
+        launcher.launcherOffAtIdle(); // set launcher off after next launch
     }
 
     void launchFarShot(int count, double interval) {
@@ -603,6 +609,7 @@ public class PedroPathingAutoOpMode extends OpMode {
         launchCount = 0;
 
         launcher.launcherOnAtIdle(); // keep launcher on between consecutive launches
+        checkBallDetected();
         for (int i = 0; i < count; i++) {
             if (!isBallDetected) {
                 panicCount++;
@@ -620,16 +627,16 @@ public class PedroPathingAutoOpMode extends OpMode {
             }
         }
 
-        launcher.launcherOffAtIdle(); // set launcher off after next launch
         if (launchCount < count) {
             if (!isBallDetected) {
                 panicCount++;
                 launcherPanic();
             }
-            launchCount++;
-            launcher.launchFarShot(); // last launch if still have ball
-        } else {
-            launcher.setLauncherOff();
+            if (isBallDetected) {
+                launchCount++;
+                launcher.launchFarShot(); // last launch if still have ball
+            }
         }
+        launcher.launcherOffAtIdle(); // set launcher off after next launch
     }
 }
