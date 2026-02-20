@@ -42,14 +42,18 @@ public class MecanumIntakeTeleOp extends OpMode {
     double INTAKE_POWER = 0.75;
     double INTAKE_PANIC_TIME = 0.10;
 
-    double ClOSE_LAUNCH_TARGET_VELOCITY = 1300;
-    double CLOSE_LAUNCH_MIN_VELOCITY    = 1280;
+    double SUPER_CLOSE_LAUNCH_TARGET_VELOCITY = 1200;
+    double SUPER_CLOSE_LAUNCH_MIN_VELOCITY    = 1190;
+    double CLOSE_LAUNCH_TARGET_VELOCITY = 1300;
+    double CLOSE_LAUNCH_MIN_VELOCITY    = 1290;
     double FAR_LAUNCH_TARGET_VELOCITY   = 1600;
-    double FAR_LAUNCH_MIN_VELOCITY      = 1580;
+    double FAR_LAUNCH_MIN_VELOCITY      = 1590;
 
-    double FEEDER_RUN_SECONDS = 0.10;
-    double FEEDER_PANIC_INTERVAL = 0.10 + FEEDER_RUN_SECONDS;
+    double FEEDER_RUN_SECONDS = 0.15;
+    double FEEDER_PANIC_SECONDS = 0.10;
+    double FEEDER_PANIC_INTERVAL = FEEDER_PANIC_SECONDS + 0.10;
     double LAUNCH_COOL_OFF_SECONDS = 0.20;
+    double LAUNCH_ON_SECOND_AT_IDLE = 2.0;
 
     // === Drivetrain motors ===
     private final MecanumDrive mecanumDrive = new MecanumDrive()
@@ -119,10 +123,14 @@ public class MecanumIntakeTeleOp extends OpMode {
 
         /* === Launcher setup === */
         launcher.build(hardwareMap);
-        launcher.setLauncherCloseVelocity(ClOSE_LAUNCH_TARGET_VELOCITY, CLOSE_LAUNCH_MIN_VELOCITY);
+        launcher.launcherOnAtIdle();
+        launcher.setLauncherReadyVelocity(SUPER_CLOSE_LAUNCH_TARGET_VELOCITY);
+        launcher.setLauncherCloseVelocity(CLOSE_LAUNCH_TARGET_VELOCITY, CLOSE_LAUNCH_MIN_VELOCITY);
         launcher.setLauncherFarVelocity(FAR_LAUNCH_TARGET_VELOCITY, FAR_LAUNCH_MIN_VELOCITY);
         launcher.setLauncherCoolOffSec(LAUNCH_COOL_OFF_SECONDS);
+        launcher.setLauncherOnSecAtIdle(LAUNCH_ON_SECOND_AT_IDLE);
         launcher.setFeederRunSec(FEEDER_RUN_SECONDS);
+        launcher.setPanicRunSec(FEEDER_PANIC_SECONDS);
 
         /* === Indicator light === */
         indicatorLight.build(hardwareMap);
@@ -219,13 +227,23 @@ public class MecanumIntakeTeleOp extends OpMode {
         }
 
         // === Launcher ===
-        boolean closeShot   = gamepad1.right_bumper;
+        boolean superCloseShot  = gamepad1.circleWasPressed();
+        boolean normalCloseShot = gamepad1.right_bumper;
+        boolean closeShot   = superCloseShot || normalCloseShot;
         boolean farShot     = gamepad1.right_trigger > 0.5;
-        boolean launchPanic = intakeMotor.isBusy() && isBallDetected &&
-                                (sensorTime.seconds() > FEEDER_PANIC_INTERVAL);
+        boolean launchReady = gamepad1.left_bumper || gamepad1.left_trigger > 0.5 ||
+                                gamepad2.left_bumper || gamepad2.left_trigger > 0.5;
+        boolean launchPanic = intakeMotor.isBusy() && (sensorTime.seconds() > FEEDER_PANIC_INTERVAL);
+
         if (launchPanic)
             sensorTime.reset();
-        launcher.launch(closeShot, farShot, launchPanic);
+
+        if (superCloseShot)
+            launcher.setLauncherCloseVelocity(SUPER_CLOSE_LAUNCH_TARGET_VELOCITY, SUPER_CLOSE_LAUNCH_MIN_VELOCITY);
+        else if (normalCloseShot)
+            launcher.setLauncherCloseVelocity(CLOSE_LAUNCH_TARGET_VELOCITY, CLOSE_LAUNCH_MIN_VELOCITY);
+
+        launcher.launch(closeShot, farShot, launchReady, launchPanic);
 
         // === Status Output ===
         telemetry.addData("Alliance Team", alliance.toString());
