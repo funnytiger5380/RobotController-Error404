@@ -92,7 +92,7 @@ public class PedroPathingAutoOpMode extends OpMode {
     // Intake motor constants
     double INTAKE_POWER = 0.75;
     double INTAKE_PANIC_TIME = 0.10;
-    double INTAKE_PANIC_WAIT = 0.40;
+    double INTAKE_PANIC_WAIT = 0.30;
 
     // Launcher constants
     double CLOSE_LAUNCH_TARGET_VELOCITY = 1300;
@@ -107,11 +107,10 @@ public class PedroPathingAutoOpMode extends OpMode {
     double FEEDER_PANIC_SECONDS = 0.10;
     double FEEDER_PANIC_INTERVAL = FEEDER_PANIC_SECONDS + 0.10;
     double LAUNCH_COOL_OFF_SECONDS = 0.20;
-    double LAUNCH_ON_SECOND_AT_IDLE = 2.0;
+    double LAUNCH_ON_SECOND_AT_IDLE = 3.3;
 
     // OpMode timers
     Timer runTime = new Timer();
-    Timer pathTimer = new Timer();
     Timer launchTimer = new Timer();
     Timer sensorTimer = new Timer();
 
@@ -161,6 +160,10 @@ public class PedroPathingAutoOpMode extends OpMode {
         // Initialize launcher and feeders
         launcher.build(hardwareMap);
         launcher.launcherOffAtIdle();
+        if (useFarStartPose) // use far start pose
+            launcher.setLauncherReadyVelocity(FAR_LAUNCH_TARGET_VELOCITY);
+        else
+            launcher.setLauncherReadyVelocity(CLOSE_LAUNCH_TARGET_VELOCITY);
         launcher.setLauncherCloseVelocity(CLOSE_LAUNCH_TARGET_VELOCITY, CLOSE_LAUNCH_MIN_VELOCITY);
         launcher.setLauncherFarVelocity(FAR_LAUNCH_TARGET_VELOCITY, FAR_LAUNCH_MIN_VELOCITY);
         launcher.setLauncherCoolOffSec(LAUNCH_COOL_OFF_SECONDS);
@@ -238,8 +241,7 @@ public class PedroPathingAutoOpMode extends OpMode {
         telemetry.addLine("Follower action sequence remaining:");
         telemetry.addLine(followerSelectedAction.getActionLines());
         telemetry.addData("Path State", pathState.toString());
-        telemetry.addData("Path Time", pathTimer.getElapsedTimeSeconds());
-        telemetry.addData("Path Completion", "x(%.2%)", follower.getPathCompletion());
+        telemetry.addData("Path Completion", "(%.2f)", follower.getPathCompletion());
         telemetry.addData("Launch Count", launchCount);
         telemetry.addData("Panic Count", panicCount);
         telemetry.update();
@@ -247,7 +249,8 @@ public class PedroPathingAutoOpMode extends OpMode {
 
     void setPathState(PathState newPathState) {
         this.pathState = newPathState;
-        pathTimer.resetTimer();
+        if (newPathState == PathState.SCORE_POSE)
+            launcherReady();
     }
 
     void updatePathState() {
@@ -261,8 +264,6 @@ public class PedroPathingAutoOpMode extends OpMode {
             switch (pathState) {
                 case START_POSE:
                     if (isNextAction(FollowerAction.CLOSE_LAUNCH)) {
-                        intakeMotor.setIntakePanic();
-                        launcherWaitSeconds(INTAKE_PANIC_TIME);
                         intakeMotor.setIntakeOn();
                         followerPose.useCloseScorePose();
                         followingPath(pathBuilder, FollowerPathBuilder::buildPaths_startPos2Score);
@@ -552,6 +553,13 @@ public class PedroPathingAutoOpMode extends OpMode {
                 }
                 sensorTimer.resetTimer();
             }
+        }
+    }
+
+    void launcherReady() {
+        if (isBallDetected) {
+            launcher.launcherOnAtIdle();
+            launcher.launch(false, false, true, false);
         }
     }
 
