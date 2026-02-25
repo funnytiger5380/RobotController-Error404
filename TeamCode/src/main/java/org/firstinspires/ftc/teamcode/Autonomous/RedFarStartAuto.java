@@ -14,7 +14,7 @@ public class RedFarStartAuto extends PedroPathingAutoOpMode {
         myOpMode.hardwareMap = hardwareMap;
         myOpMode.useRedPose = true;
         myOpMode.useFarStartPose = true;
-        myOpMode.useFarStopPose  = false;
+        myOpMode.useFarStopPose  = true;
         myOpMode.init();
     }
     @Override

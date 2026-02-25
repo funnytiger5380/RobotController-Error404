@@ -130,17 +130,17 @@ public class FollowerPose {
         y_start_pose_far = 9.0;
         h_start_pose_far = 90.0;
         x_start_score_far = 56.0;
-        y_start_score_far = 14.0;
+        y_start_score_far = 16.0;
         h_start_score_far = 116.0;
         x_score_pose_far = 56.0;
-        y_score_pose_far = 15.0;
-        h_score_pose_far = 124.5;
+        y_score_pose_far = 17.5;
+        h_score_pose_far = 118.5;
         x_stop_pose_far = 56.0;
         y_stop_pose_far = 33.0;
         h_stop_pose_far = 90.0;
 
-        x_high_spike_line_start = 44.0;
-        y_high_spike_line_start = 84.0;
+        x_high_spike_line_start = 46.0; // 44.0;
+        y_high_spike_line_start = 83.0; // 84.0;
         h_high_spike_line_start = 180.0;
         x_high_spike_line_end = 19.0;
         y_high_spike_line_end = y_high_spike_line_start;
@@ -149,8 +149,8 @@ public class FollowerPose {
         y_high_spike_line_return = y_high_spike_line_start;
         h_high_spike_line_return = h_high_spike_line_start - 20.0;
 
-        x_mid_spike_line_start = 44.0;
-        y_mid_spike_line_start = 60.0;
+        x_mid_spike_line_start = 46.0; // 44.0;
+        y_mid_spike_line_start = 60.5;
         h_mid_spike_line_start = 180.0;
         x_mid_spike_line_end = 19.0;
         y_mid_spike_line_end = y_mid_spike_line_start;
@@ -159,8 +159,8 @@ public class FollowerPose {
         y_mid_spike_line_return = y_mid_spike_line_start;
         h_mid_spike_line_return = h_mid_spike_line_start - 20.0;
 
-        x_low_spike_line_start = 44.0;
-        y_low_spike_line_start = 39.0; //36.0 1-4-26
+        x_low_spike_line_start = 46.0; // 44.0;
+        y_low_spike_line_start = 41.5; //36.0 1-4-26
         h_low_spike_line_start = 180.0;
         x_low_spike_line_end = 19.0;
         y_low_spike_line_end = y_low_spike_line_start;
@@ -172,7 +172,7 @@ public class FollowerPose {
         x_gate_pose = 20.5;
         y_gate_pose = 69.0;
         h_gate_pose = 180.0;
-        x_gate_contact = 18.0;
+        x_gate_contact = 19.0;
         y_gate_contact = 69.0;
         h_gate_contact = 180.0;
         x_gate_return = 44.0;
