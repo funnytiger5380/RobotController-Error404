@@ -128,18 +128,17 @@ public class PedroPathingAutoOpMode extends OpMode {
         if (useFarStartPose) { // use far start pose
             followerPose.useFarStartPose();
             if (useRedPose) { // red far
-                followerPose.setMidSpkPose(90.0, 63.0, Math.toRadians(-12.0));
-                followerPose.setMidSpkEnd(123.0, 61.0, Math.toRadians(-17.0));
-                followerPose.setStopPose(100.0, 75.0, Math.toRadians(-10.0));
+                followerPose.setMidSpkPose(100.0, 60.5, Math.toRadians(0.0));
+                followerPose.setMidSpkEnd(132.0, 60.5, Math.toRadians(0.0));
             } else { // blue far
-                followerPose.setMidSpkPose(44.0, 64.5, Math.toRadians(180.0));
-                followerPose.setMidSpkEnd(19.0, 64.5, Math.toRadians(180.0));
+                followerPose.setMidSpkPose(46.0, 64.5, Math.toRadians(180.0));
+                followerPose.setMidSpkEnd(12.0, 64.5, Math.toRadians(180.0));
             }
         } else { // use close start pose
             followerPose.useCloseStartPose();
             if (useRedPose) { // red close
                 followerPose.setLowSpkPose(77.0, 42.5, Math.toRadians(-12.0));
-                followerPose.setLowSpkEnd(107.0, 39.5, Math.toRadians(-17.0));
+                followerPose.setLowSpkEnd(108.0, 39.5, Math.toRadians(-17.0));
             } else {
                 followerPose.setLowSpkPose(44.0, 37.0, Math.toRadians(180.0));
                 followerPose.setLowSpkEnd(19.0, 37.0, Math.toRadians(180.0));
@@ -603,10 +602,8 @@ public class PedroPathingAutoOpMode extends OpMode {
                 panicCount++;
                 launcherPanic();
             }
-            if (isBallDetected) {
-                launchCount++;
-                launcher.launchCloseShot(); // last launch if still have ball
-            }
+            launchCount++;
+            launcher.launchCloseShot(); // last launch if still have ball
         }
         launcher.launcherOffAtIdle(); // set launcher off after next launch
         launcher.setLauncherOff();
@@ -640,10 +637,8 @@ public class PedroPathingAutoOpMode extends OpMode {
                 panicCount++;
                 launcherPanic();
             }
-            if (isBallDetected) {
-                launchCount++;
-                launcher.launchFarShot(); // last launch if still have ball
-            }
+            launchCount++;
+            launcher.launchFarShot(); // last launch if still have ball
         }
         launcher.launcherOffAtIdle(); // set launcher off after next launch
         launcher.setLauncherOff();
