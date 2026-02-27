@@ -43,11 +43,11 @@ public class MecanumIntakeTeleOp extends OpMode {
     double INTAKE_PANIC_TIME = 0.10;
 
     double SUPER_CLOSE_LAUNCH_TARGET_VELOCITY = 1200;
-    double SUPER_CLOSE_LAUNCH_MIN_VELOCITY    = 1190;
-    double CLOSE_LAUNCH_TARGET_VELOCITY = 1300;
-    double CLOSE_LAUNCH_MIN_VELOCITY    = 1290;
-    double FAR_LAUNCH_TARGET_VELOCITY   = 1600;
-    double FAR_LAUNCH_MIN_VELOCITY      = 1590;
+    double SUPER_CLOSE_LAUNCH_MIN_VELOCITY    = 1195;
+    double CLOSE_LAUNCH_TARGET_VELOCITY = 1315;
+    double CLOSE_LAUNCH_MIN_VELOCITY    = 1310;
+    double FAR_LAUNCH_TARGET_VELOCITY   = 1640;
+    double FAR_LAUNCH_MIN_VELOCITY      = 1638;
 
     double FEEDER_RUN_SECONDS = 0.15;
     double FEEDER_PANIC_SECONDS = 0.10;
@@ -175,7 +175,6 @@ public class MecanumIntakeTeleOp extends OpMode {
     public void start() {
         if (!isIMURequested)
             mecanumDrive.resetDriveYaw();
-
         mecanumDrive.setDriveAngularOffset(driveHeadingOffset);
         mecanumDrive.restartDrives();
         runTime.reset();
@@ -231,12 +230,17 @@ public class MecanumIntakeTeleOp extends OpMode {
         boolean normalCloseShot = gamepad1.right_bumper;
         boolean closeShot   = superCloseShot || normalCloseShot;
         boolean farShot     = gamepad1.right_trigger > 0.5;
-        boolean launchReady = gamepad1.left_bumper || gamepad1.left_trigger > 0.5 ||
-                gamepad2.left_bumper || gamepad2.left_trigger > 0.5;
+        boolean launchReady = gamepad1.dpad_up || gamepad2.dpad_up;
+        boolean launchOff   = gamepad1.dpad_down || gamepad2.dpad_down;
         boolean launchPanic = intakeMotor.isBusy() && (sensorTime.seconds() > FEEDER_PANIC_INTERVAL);
 
         if (launchPanic)
             sensorTime.reset();
+
+        if (launchReady)
+            launcher.launcherOnAtIdle();
+        else if (launchOff)
+            launcher.launcherOffAtIdle();
 
         if (superCloseShot)
             launcher.setLauncherCloseVelocity(SUPER_CLOSE_LAUNCH_TARGET_VELOCITY, SUPER_CLOSE_LAUNCH_MIN_VELOCITY);
