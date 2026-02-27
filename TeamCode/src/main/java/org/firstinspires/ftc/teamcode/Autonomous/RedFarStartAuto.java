@@ -15,6 +15,7 @@ public class RedFarStartAuto extends PedroPathingAutoOpMode {
         myOpMode.useRedPose = true;
         myOpMode.useFarStartPose = true;
         myOpMode.useFarStopPose  = true;
+        myOpMode.useSuperClosePose = false;
         myOpMode.init();
     }
     @Override

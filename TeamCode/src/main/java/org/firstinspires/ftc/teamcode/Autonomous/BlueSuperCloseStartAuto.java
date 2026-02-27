@@ -2,8 +2,8 @@ package org.firstinspires.ftc.teamcode.Autonomous;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-@Autonomous(name = "BlueCloseStartAuto", group = "Error404")
-public class BlueCloseStartAuto extends PedroPathingAutoOpMode {
+@Autonomous(name = "BlueSuperCloseStartAuto", group = "Error404")
+public class BlueSuperCloseStartAuto extends PedroPathingAutoOpMode {
     private final PedroPathingAutoOpMode myOpMode = new PedroPathingAutoOpMode();
 
     @Override
@@ -15,7 +15,7 @@ public class BlueCloseStartAuto extends PedroPathingAutoOpMode {
         myOpMode.useRedPose = false;
         myOpMode.useFarStartPose = false;
         myOpMode.useFarStopPose  = false;
-        myOpMode.useSuperClosePose = false;
+        myOpMode.useSuperClosePose = true;
         myOpMode.init();
     }
     @Override
