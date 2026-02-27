@@ -99,8 +99,8 @@ public class PedroPathingAutoOpMode extends OpMode {
     double CLOSE_LAUNCH_MIN_VELOCITY = 1310;
     double CLOSE_LAUNCH_INTERVAL_SECONDS = 0.40;
 
-    double FAR_LAUNCH_TARGET_VELOCITY = 1640;
-    double FAR_LAUNCH_MIN_VELOCITY = 1638;
+    double FAR_LAUNCH_TARGET_VELOCITY = 1645;
+    double FAR_LAUNCH_MIN_VELOCITY = 1643;
     double FAR_LAUNCH_INTERVAL_SECONDS = 0.70;
 
     double FEEDER_RUN_SECONDS = 0.15;
@@ -146,7 +146,7 @@ public class PedroPathingAutoOpMode extends OpMode {
                 }
             } else {
                 followerPose.setLowSpkPose(44.0, 37.0, Math.toRadians(180.0));
-                followerPose.setLowSpkEnd(19.0, 37.0, Math.toRadians(180.0));
+                followerPose.setLowSpkEnd(14.0, 35.0, Math.toRadians(185.0));
                 if (useSuperClosePose) {
                     followerPose.changeStartScorePose(58.0, 120.0, 163.0);
                     followerPose.changeScorePose(58.0, 120.0, 163.0);
@@ -405,7 +405,7 @@ public class PedroPathingAutoOpMode extends OpMode {
                         } else if (isNextAction(FollowerAction.FAR_LAUNCH)) {
                             followerPose.useFarScorePose();
                             if (!useRedPose) // blue
-                                followerPose.setScorePose(56.0, 15.0, Math.toRadians(127.0));
+                                followerPose.setScorePose(56.0, 20.0, Math.toRadians(127.0));
                             else // red
                                 followerPose.setScorePose(89.0, 18.0, Math.toRadians(53.0)); // 65.0
 
