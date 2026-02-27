@@ -64,7 +64,11 @@ public class FollowerPose {
     /** Set stop position (x, y, heading): at which the robot finishes its autonomous path.
      */
     public void setStopPose(double x, double y, double h) { stopPose = new Pose(x, y, h); }
-
+    public void changeStopPose(double x, double y, double h) {
+        x_stop_pose_close = x;
+        y_stop_pose_close = y;
+        h_stop_pose_close = h;
+    }
     /** Set the start, end and return positions to grab the artifacts on highest spike mark.
      */
     public void setHighSpkPose(double x, double y, double h) { highSpkPose = new Pose(x, y, h); }
@@ -140,10 +144,10 @@ public class FollowerPose {
         y_start_pose_far = 9.0;
         h_start_pose_far = 90.0;
         x_start_score_far = 56.0;
-        y_start_score_far = 16.0;
-        h_start_score_far = 116.0;
+        y_start_score_far = 17.5;
+        h_start_score_far = 113.0;
         x_score_pose_far = 56.0;
-        y_score_pose_far = 17.5;
+        y_score_pose_far = 18.5;
         h_score_pose_far = 118.5;
         x_stop_pose_far = 46.0;
         y_stop_pose_far = 33.0;
@@ -163,7 +167,7 @@ public class FollowerPose {
         y_mid_spike_line_start = 60.5;
         h_mid_spike_line_start = 180.0;
         x_mid_spike_line_end = 19.0;
-        y_mid_spike_line_end = y_mid_spike_line_start;
+        y_mid_spike_line_end = y_mid_spike_line_start - 2.0;
         h_mid_spike_line_end = h_mid_spike_line_start;
         x_mid_spike_line_return = x_mid_spike_line_start;
         y_mid_spike_line_return = y_mid_spike_line_start;
@@ -214,11 +218,11 @@ public class FollowerPose {
         y_start_pose_far = 9.0;
         h_start_pose_far = 87.0; // 90.0 1-4-26 (don't touch)
         x_start_score_far = 88.0;
-        y_start_score_far = 14.0;
-        h_start_score_far = 67.5; // 65.0 1-4-26 (don't touch)
-        x_score_pose_far = 88.0;
-        y_score_pose_far = 15.0;
-        h_score_pose_far = 62.0; // 65.0 1-4-26 (don't touch)
+        y_start_score_far = 18.5;
+        h_start_score_far = 68.0; // 65.0 1-4-26 (don't touch)
+        x_score_pose_far = 89.0;
+        y_score_pose_far = 19.5;
+        h_score_pose_far = 64.0; // 65.0 1-4-26 (don't touch)
         x_stop_pose_far = 88.0;
         y_stop_pose_far = 33.0;
         h_stop_pose_far = 90.0;
@@ -227,7 +231,7 @@ public class FollowerPose {
         y_high_spike_line_start = 86.5;  // 84.0 1-4-26
         h_high_spike_line_start = -12.0; // 0.0;
         x_high_spike_line_end = 113.0;
-        y_high_spike_line_end = y_high_spike_line_start;
+        y_high_spike_line_end = y_high_spike_line_start - 2.0;
         h_high_spike_line_end = h_high_spike_line_start;
         x_high_spike_line_return = x_high_spike_line_start;
         y_high_spike_line_return = y_high_spike_line_start;
@@ -237,7 +241,7 @@ public class FollowerPose {
         y_mid_spike_line_start = 65.0; // 60.0; 1-4-26
         h_mid_spike_line_start = h_high_spike_line_start;
         x_mid_spike_line_end = 111.5;
-        y_mid_spike_line_end = y_mid_spike_line_start - 3.0;
+        y_mid_spike_line_end = y_mid_spike_line_start - 4.0;
         h_mid_spike_line_end = h_mid_spike_line_start - 5.0;
         x_mid_spike_line_return = x_mid_spike_line_start;
         y_mid_spike_line_return = y_mid_spike_line_start;
@@ -246,8 +250,8 @@ public class FollowerPose {
         x_low_spike_line_start = 100.0; // 100.0
         y_low_spike_line_start = 35.5; // 36.0 1-4-26
         h_low_spike_line_start = 0.0; // -12.0 h_high_spike_line_start;
-        x_low_spike_line_end = 132.0;
-        y_low_spike_line_end = y_low_spike_line_start;
+        x_low_spike_line_end = 128.0;
+        y_low_spike_line_end = y_low_spike_line_start - 2.0;
         h_low_spike_line_end = h_low_spike_line_start;
         x_low_spike_line_return = x_low_spike_line_start;
         y_low_spike_line_return = y_low_spike_line_start;
@@ -256,7 +260,7 @@ public class FollowerPose {
         x_gate_pose = 106.0;
         y_gate_pose = 62.0;
         h_gate_pose = -12.0; // 0.0;
-        x_gate_contact = 113;
+        x_gate_contact = 112.5;
         y_gate_contact = 69.0;
         h_gate_contact = -12.0; // 0.0;
         x_gate_return = 85.0;
