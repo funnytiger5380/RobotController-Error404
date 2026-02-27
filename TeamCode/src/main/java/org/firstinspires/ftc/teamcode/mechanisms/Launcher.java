@@ -223,7 +223,7 @@ public class Launcher {
                     if (getReady) {
                         launchTimer.reset();
                         launcher.setVelocity(readyTargetVelocity);
-                    } else if (launchTimer.seconds() > launcherOnSecAtIdle)
+                    } else if (launchTimer.seconds() >= launcherOnSecAtIdle)
                         launcher.setVelocity(0.0);
                 } else {
                     launcher.setVelocity(0.0);
@@ -244,7 +244,7 @@ public class Launcher {
                     launchState = LaunchState.SPIN_UP_C;
                 }
                 else {
-                    if (feederTimer.seconds() > panicRunSec) {
+                    if (feederTimer.seconds() >= panicRunSec) {
                         isPanic = false;
                         leftFeeder.setPower(0.0);
                         rightFeeder.setPower(0.0);
@@ -261,13 +261,13 @@ public class Launcher {
 
             case SPIN_UP_F:
                 launcher.setVelocity(farTargetVelocity);
-                if (launcher.getVelocity() > farMinVelocity)
+                if (launcher.getVelocity() >= farMinVelocity)
                     launchState = LaunchState.LAUNCH;
                 break;
 
                 case SPIN_UP_C:
                 launcher.setVelocity(closeTargetVelocity);
-                if (launcher.getVelocity() > closeMinVelocity)
+                if (launcher.getVelocity() >= closeMinVelocity)
                     launchState = LaunchState.LAUNCH;
                 break;
 
@@ -279,16 +279,23 @@ public class Launcher {
                 break;
 
             case LAUNCHING:
-                if (feederTimer.seconds() > feederRunSec) {
-                    leftFeeder.setPower(-1.0);
-                    rightFeeder.setPower(-1.0);
-                    feederTimer.reset();
-                    launchState = LaunchState.COOL_OFF;
+                if (feederTimer.seconds() >= feederRunSec) {
+                    if (launcherCoolOffSec != 0.0) {
+                        leftFeeder.setPower(-1.0);
+                        rightFeeder.setPower(-1.0);
+                        launchTimer.reset();
+                        launchState = LaunchState.COOL_OFF;
+                    } else {
+                        leftFeeder.setPower(0.0);
+                        rightFeeder.setPower(0.0);
+                        launchTimer.reset();
+                        launchState = LaunchState.IDLE;
+                    }
                 }
                 break;
 
             case COOL_OFF:
-                if (feederTimer.seconds() > launcherCoolOffSec) {
+                if (launchTimer.seconds() >= launcherCoolOffSec) {
                     leftFeeder.setPower(0.0);
                     rightFeeder.setPower(0.0);
                     launchTimer.reset();

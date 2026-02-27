@@ -26,7 +26,7 @@ public class PedroPathingAutoOpMode extends OpMode {
     Pose currentPose = new Pose();
 
     // Configurable OpMode parameters
-    boolean useRedPose, useFarStartPose, useFarStopPose;
+    boolean useRedPose, useFarStartPose, useFarStopPose, useSuperClosePose;
 
     enum PathState {
         START_POSE, SCORE_POSE, STOP_POSE,
@@ -86,28 +86,28 @@ public class PedroPathingAutoOpMode extends OpMode {
     // Drivetrain constants
     double PATH_SPEED_NORMAL = 0.90;
     double PATH_SPEED_SLOW = 0.70;
-    double GRAB_SPEED = 0.40;
+    double GRAB_SPEED = 0.50;
     double GATE_SPEED = 0.40;
 
     // Intake motor constants
     double INTAKE_POWER = 0.75;
     double INTAKE_PANIC_TIME = 0.10;
-    double INTAKE_PANIC_WAIT = 0.30;
+    double INTAKE_PANIC_WAIT = 0.40;
 
     // Launcher constants
-    double CLOSE_LAUNCH_TARGET_VELOCITY = 1300;
-    double CLOSE_LAUNCH_MIN_VELOCITY = 1290;
-    double CLOSE_LAUNCH_INTERVAL_SECONDS = 0.20;
+    double CLOSE_LAUNCH_TARGET_VELOCITY = 1315;
+    double CLOSE_LAUNCH_MIN_VELOCITY = 1310;
+    double CLOSE_LAUNCH_INTERVAL_SECONDS = 0.40;
 
-    double FAR_LAUNCH_TARGET_VELOCITY = 1600;
-    double FAR_LAUNCH_MIN_VELOCITY = 1590;
-    double FAR_LAUNCH_INTERVAL_SECONDS = 0.30;
+    double FAR_LAUNCH_TARGET_VELOCITY = 1640;
+    double FAR_LAUNCH_MIN_VELOCITY = 1638;
+    double FAR_LAUNCH_INTERVAL_SECONDS = 0.70;
 
     double FEEDER_RUN_SECONDS = 0.15;
     double FEEDER_PANIC_SECONDS = 0.10;
     double FEEDER_PANIC_INTERVAL = FEEDER_PANIC_SECONDS + 0.10;
     double LAUNCH_COOL_OFF_SECONDS = 0.20;
-    double LAUNCH_ON_SECOND_AT_IDLE = 3.3;
+    double LAUNCH_ON_SECOND_AT_IDLE = 2.5;
 
     // OpMode timers
     Timer runTime = new Timer();
@@ -128,19 +128,28 @@ public class PedroPathingAutoOpMode extends OpMode {
         if (useFarStartPose) { // use far start pose
             followerPose.useFarStartPose();
             if (useRedPose) { // red far
-                followerPose.setMidSpkPose(90.0, 63.0, Math.toRadians(-12.0));
-                followerPose.setMidSpkEnd(123.0, 61.0, Math.toRadians(-17.0));
-                followerPose.setStopPose(100.0, 75.0, Math.toRadians(-10.0));
-            }
-            else { // blue far
-                followerPose.setMidSpkPose(44.0, 63.0, Math.toRadians(180.0));
-                followerPose.setMidSpkEnd(19.0, 63.0, Math.toRadians(180.0));
+                followerPose.setMidSpkPose(100.0, 59.0, Math.toRadians(0.0));
+                followerPose.setMidSpkEnd(132.0, 59.0, Math.toRadians(0.0));
+            } else { // blue far
+                followerPose.setMidSpkPose(46.0, 64.5, Math.toRadians(180.0));
+                followerPose.setMidSpkEnd(12.0, 64.5, Math.toRadians(180.0));
             }
         } else { // use close start pose
             followerPose.useCloseStartPose();
             if (useRedPose) { // red close
                 followerPose.setLowSpkPose(77.0, 42.5, Math.toRadians(-12.0));
                 followerPose.setLowSpkEnd(107.0, 39.5, Math.toRadians(-17.0));
+                if (useSuperClosePose) {
+                    followerPose.changeStartScorePose(80.0, 120.0, 17.0);
+                    followerPose.changeScorePose(80.0, 120.0, 7.0);
+                }
+            } else {
+                followerPose.setLowSpkPose(44.0, 37.0, Math.toRadians(180.0));
+                followerPose.setLowSpkEnd(19.0, 37.0, Math.toRadians(180.0));
+                if (useSuperClosePose) {
+                    followerPose.changeStartScorePose(58.0, 120.0, 163.0);
+                    followerPose.changeScorePose(58.0, 120.0, 163.0);
+                }
             }
         }
 
@@ -160,10 +169,7 @@ public class PedroPathingAutoOpMode extends OpMode {
         // Initialize launcher and feeders
         launcher.build(hardwareMap);
         launcher.launcherOffAtIdle();
-        if (useFarStartPose) // use far start pose
-            launcher.setLauncherReadyVelocity(FAR_LAUNCH_TARGET_VELOCITY);
-        else
-            launcher.setLauncherReadyVelocity(CLOSE_LAUNCH_TARGET_VELOCITY);
+        launcher.setLauncherReadyVelocity(CLOSE_LAUNCH_TARGET_VELOCITY);
         launcher.setLauncherCloseVelocity(CLOSE_LAUNCH_TARGET_VELOCITY, CLOSE_LAUNCH_MIN_VELOCITY);
         launcher.setLauncherFarVelocity(FAR_LAUNCH_TARGET_VELOCITY, FAR_LAUNCH_MIN_VELOCITY);
         launcher.setLauncherCoolOffSec(LAUNCH_COOL_OFF_SECONDS);
@@ -249,7 +255,7 @@ public class PedroPathingAutoOpMode extends OpMode {
 
     void setPathState(PathState newPathState) {
         this.pathState = newPathState;
-        if (newPathState == PathState.SCORE_POSE)
+        if ((newPathState == PathState.SCORE_POSE) && isNextAction(FollowerAction.CLOSE_LAUNCH))
             launcherReady();
     }
 
@@ -395,10 +401,10 @@ public class PedroPathingAutoOpMode extends OpMode {
                             }
                         } else if (isNextAction(FollowerAction.FAR_LAUNCH)) {
                             followerPose.useFarScorePose();
-                            if (!useRedPose) // blue
-                                followerPose.setScorePose(56.0, 15.0, Math.toRadians(127.0));
-                            else // red
-                                followerPose.setScorePose(88.0, 15.0, Math.toRadians(64.0)); // 65.0
+                            //if (!useRedPose) // blue
+                            //    followerPose.setScorePose(56.0, 15.0, Math.toRadians(127.0));
+                            //else // red
+                            //    followerPose.setScorePose(88.0, 15.0, Math.toRadians(64.0)); // 65.0
 
                             if (isLowSpikeGrabbed) {
                                 followingPath(pathBuilder, FollowerPathBuilder::buildPaths_midSpkEnd2Score);
@@ -604,12 +610,11 @@ public class PedroPathingAutoOpMode extends OpMode {
                 panicCount++;
                 launcherPanic();
             }
-            if (isBallDetected) {
-                launchCount++;
-                launcher.launchCloseShot(); // last launch if still have ball
-            }
+            launchCount++;
+            launcher.launchCloseShot(); // last launch if still have ball
         }
         launcher.launcherOffAtIdle(); // set launcher off after next launch
+        launcher.setLauncherOff();
     }
 
     void launchFarShot(int count, double interval) {
@@ -640,11 +645,10 @@ public class PedroPathingAutoOpMode extends OpMode {
                 panicCount++;
                 launcherPanic();
             }
-            if (isBallDetected) {
-                launchCount++;
-                launcher.launchFarShot(); // last launch if still have ball
-            }
+            launchCount++;
+            launcher.launchFarShot(); // last launch if still have ball
         }
         launcher.launcherOffAtIdle(); // set launcher off after next launch
+        launcher.setLauncherOff();
     }
 }
