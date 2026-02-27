@@ -26,7 +26,7 @@ public class PedroPathingAutoOpMode extends OpMode {
     Pose currentPose = new Pose();
 
     // Configurable OpMode parameters
-    boolean useRedPose, useFarStartPose, useFarStopPose;
+    boolean useRedPose, useFarStartPose, useFarStopPose, useSuperClosePose;
 
     enum PathState {
         START_POSE, SCORE_POSE, STOP_POSE,
@@ -128,8 +128,8 @@ public class PedroPathingAutoOpMode extends OpMode {
         if (useFarStartPose) { // use far start pose
             followerPose.useFarStartPose();
             if (useRedPose) { // red far
-                followerPose.setMidSpkPose(100.0, 60.5, Math.toRadians(0.0));
-                followerPose.setMidSpkEnd(132.0, 60.5, Math.toRadians(0.0));
+                followerPose.setMidSpkPose(100.0, 59.0, Math.toRadians(0.0));
+                followerPose.setMidSpkEnd(132.0, 59.0, Math.toRadians(0.0));
             } else { // blue far
                 followerPose.setMidSpkPose(46.0, 64.5, Math.toRadians(180.0));
                 followerPose.setMidSpkEnd(12.0, 64.5, Math.toRadians(180.0));
@@ -138,10 +138,18 @@ public class PedroPathingAutoOpMode extends OpMode {
             followerPose.useCloseStartPose();
             if (useRedPose) { // red close
                 followerPose.setLowSpkPose(77.0, 42.5, Math.toRadians(-12.0));
-                followerPose.setLowSpkEnd(108.0, 39.5, Math.toRadians(-17.0));
+                followerPose.setLowSpkEnd(107.0, 39.5, Math.toRadians(-17.0));
+                if (useSuperClosePose) {
+                    followerPose.changeStartScorePose(80.0, 120.0, 17.0);
+                    followerPose.changeScorePose(80.0, 120.0, 7.0);
+                }
             } else {
                 followerPose.setLowSpkPose(44.0, 37.0, Math.toRadians(180.0));
                 followerPose.setLowSpkEnd(19.0, 37.0, Math.toRadians(180.0));
+                if (useSuperClosePose) {
+                    followerPose.changeStartScorePose(58.0, 120.0, 163.0);
+                    followerPose.changeScorePose(58.0, 120.0, 163.0);
+                }
             }
         }
 
@@ -393,10 +401,10 @@ public class PedroPathingAutoOpMode extends OpMode {
                             }
                         } else if (isNextAction(FollowerAction.FAR_LAUNCH)) {
                             followerPose.useFarScorePose();
-                            if (!useRedPose) // blue
-                                followerPose.setScorePose(56.0, 15.0, Math.toRadians(127.0));
-                            else // red
-                                followerPose.setScorePose(88.0, 15.0, Math.toRadians(64.0)); // 65.0
+                            //if (!useRedPose) // blue
+                            //    followerPose.setScorePose(56.0, 15.0, Math.toRadians(127.0));
+                            //else // red
+                            //    followerPose.setScorePose(88.0, 15.0, Math.toRadians(64.0)); // 65.0
 
                             if (isLowSpikeGrabbed) {
                                 followingPath(pathBuilder, FollowerPathBuilder::buildPaths_midSpkEnd2Score);

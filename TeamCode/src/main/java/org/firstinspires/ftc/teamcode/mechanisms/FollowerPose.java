@@ -46,10 +46,20 @@ public class FollowerPose {
      * artifacts, only used after the starting position.
      */
     public void setStartScorePose(double x, double y, double h) { startScorePose = new Pose(x, y, h); }
+    public void changeStartScorePose(double x, double y, double h) {
+        x_start_score_close = x;
+        y_start_score_close = y;
+        h_start_score_close = h;
+    }
 
     /** Set scoring position (x, y, heading): face the goal wall in preparing to score the artifacts.
      */
     public void setScorePose(double x, double y, double h) { scorePose = new Pose(x, y, h); }
+    public void changeScorePose(double x, double y, double h) {
+        x_score_pose_close = x;
+        y_score_pose_close = y;
+        h_score_pose_close = h;
+    }
 
     /** Set stop position (x, y, heading): at which the robot finishes its autonomous path.
      */
@@ -243,13 +253,13 @@ public class FollowerPose {
         y_low_spike_line_return = y_low_spike_line_start;
         h_low_spike_line_return = h_low_spike_line_start + 20.0;
 
-        x_gate_pose = 110.0;
-        y_gate_pose = 69.0;
+        x_gate_pose = 106.0;
+        y_gate_pose = 62.0;
         h_gate_pose = -12.0; // 0.0;
-        x_gate_contact = 111.5;
+        x_gate_contact = 113;
         y_gate_contact = 69.0;
         h_gate_contact = -12.0; // 0.0;
-        x_gate_return = 100.0;
+        x_gate_return = 85.0;
         y_gate_return = 69.0;
         h_gate_return = 5.0; // 20.0;
 
