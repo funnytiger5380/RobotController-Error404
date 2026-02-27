@@ -129,7 +129,7 @@ public class PedroPathingAutoOpMode extends OpMode {
             followerPose.useFarStartPose();
             if (useRedPose) { // red far
                 followerPose.setMidSpkPose(100.0, 59.0, Math.toRadians(0.0));
-                followerPose.setMidSpkEnd(135.0, 58.0, Math.toRadians(0.0));
+                followerPose.setMidSpkEnd(130.0, 57.0, Math.toRadians(-5.0));
             } else { // blue far
                 followerPose.setMidSpkPose(46.0, 64.5, Math.toRadians(180.0));
                 followerPose.setMidSpkEnd(12.0, 64.5, Math.toRadians(180.0));
@@ -407,7 +407,7 @@ public class PedroPathingAutoOpMode extends OpMode {
                             if (!useRedPose) // blue
                                 followerPose.setScorePose(56.0, 20.0, Math.toRadians(127.0));
                             else // red
-                                followerPose.setScorePose(89.0, 18.0, Math.toRadians(53.0)); // 65.0
+                                followerPose.setScorePose(88.0, 18.5, Math.toRadians(53.0)); // 65.0
 
                             if (isLowSpikeGrabbed) {
                                 followingPath(pathBuilder, FollowerPathBuilder::buildPaths_midSpkEnd2Score);
